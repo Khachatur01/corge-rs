@@ -1,12 +1,12 @@
-use std::fmt::Debug;
 use crate::cli::BuildModeCli;
 use crate::config::{Profile, ProjectType, Toolchain};
 use crate::tools::extension_manager::Extension;
+use sha2::{Digest, Sha256};
+use std::fmt::Debug;
 use std::fs;
-use std::hash::{DefaultHasher, Hash, Hasher};
+use std::hash::Hash;
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use sha2::{Digest, Sha256};
 
 fn hash<P: AsRef<Path> + Hash + Debug>(path: P) -> String {
     let content = fs::read_to_string(&path).unwrap();
