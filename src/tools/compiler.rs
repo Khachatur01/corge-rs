@@ -6,16 +6,17 @@ use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use sha2::{Digest, Sha256};
 
 fn hash<P: AsRef<Path> + Hash + Debug>(path: P) -> String {
     let content = fs::read_to_string(&path).unwrap();
     let file = format!("{:?}-{}", path, content);
 
-    let mut hasher = DefaultHasher::new();
+    let mut hasher = Sha256::new();
 
-    file.hash(&mut hasher);
+    hasher.update(file);
 
-    hasher.finish().to_string()
+    hasher.finalize().0.iter().map(|byte| format!("{:02x}", byte)).collect()
 }
 
 fn add_flags(command: &mut Command, flags: &[String]) {
