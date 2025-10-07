@@ -151,9 +151,15 @@ impl Compiler {
     fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool, profile: &Profile, compiler_flags: &[String]) {
         /* todo: add parallel compilation support */
         for source in sources {
-            let output_name = Extension::Object.file_name(&hash(source), &self.toolchain.compiler);
+            let output_stem = hash(source);
+            let output_name = Extension::Object.file_name(&output_stem, &self.toolchain.compiler);
 
             let output_file = output.join(output_name);
+
+            if fs::exists(&output_file).unwrap() {
+                println!("Skipping compilation of existing file {:?}", source);
+                continue;
+            }
 
             let mut command = Command::new(&self.toolchain.compiler);
 
