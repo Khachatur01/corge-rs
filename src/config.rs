@@ -1,6 +1,6 @@
-use std::collections::HashMap;
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
 pub enum ProjectType {

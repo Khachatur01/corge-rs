@@ -1,6 +1,6 @@
 use crate::cli::BuildModeCli;
 use crate::config::{Profile, ProjectType, Toolchain};
-use crate::extension::Extension;
+use crate::tools::extension_manager::Extension;
 use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};

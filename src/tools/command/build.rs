@@ -1,9 +1,9 @@
-use std::fs;
-use std::path::PathBuf;
-use crate::compiler::Compiler;
 use crate::cli::{BuildArgs, BuildModeCli};
 use crate::config::{Config, OptimizationLevel, Profile, Toolchain};
-use crate::package_manager;
+use crate::tools::compiler::Compiler;
+use crate::tools::package_manager;
+use std::fs;
+use std::path::PathBuf;
 
 pub fn build(build_args: BuildArgs) {
     println!("Building project in directory {:?}", build_args.path);

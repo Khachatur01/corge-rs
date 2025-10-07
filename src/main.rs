@@ -1,12 +1,10 @@
 use crate::cli::CommandCli;
 use clap::Parser;
+use tools::command;
 
 mod config;
 mod cli;
-mod package_manager;
-mod extension;
-mod command;
-mod compiler;
+mod tools;
 
 fn main() {
     let args = cli::CLI::parse();
