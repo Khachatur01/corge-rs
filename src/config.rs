@@ -1,7 +1,8 @@
 use std::collections::HashMap;
+use clap::Subcommand;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
 pub enum ProjectType {
     #[default]
     #[serde(rename = "executable")]

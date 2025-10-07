@@ -1,4 +1,4 @@
-use crate::command_line_arguments::ProfileCli;
+use crate::cli::BuildModeCli;
 use crate::config::ProjectType;
 use crate::extension::Extension;
 use std::fs;
@@ -60,7 +60,7 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, profile_cli: &ProfileCli) {
+    pub fn compile(&self, profile_cli: &BuildModeCli) {
         let source = Compiler::find_source_files(&self.project_dir);
 
         let profile_dir = self.output_dir.join(profile_cli.to_string());

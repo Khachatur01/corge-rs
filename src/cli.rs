@@ -1,0 +1,109 @@
+use clap::{Parser, Subcommand};
+use std::fmt::Display;
+use std::path::PathBuf;
+
+#[derive(Clone, Debug, Default)]
+pub enum BuildModeCli {
+    #[default]
+    Development,
+    Release,
+}
+
+#[derive(Clone, Debug, Default)]
+pub enum ProjectTypeCli {
+    #[default]
+    Executable,
+    StaticLibrary,
+    DynamicLibrary,
+}
+
+impl Display for BuildModeCli {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let str = match self {
+            BuildModeCli::Release => "release".to_string(),
+            BuildModeCli::Development => "development".to_string(),
+        };
+        write!(f, "{}", str)
+    }
+}
+
+#[derive(Parser, Debug)]
+pub struct InitArgs {
+    #[arg(default_value = "./", value_name = "PATH")]
+    pub path: PathBuf,
+
+    /// Initializes the project as an executable (binary).
+    #[arg(long, group = "project_type")]
+    pub executable: bool,
+
+    /// Initializes the project as a static library.
+    #[arg(long, group = "project_type")]
+    pub s_lib: bool,
+
+    /// Initializes the project as a dynamic library.
+    #[arg(long, group = "project_type")]
+    pub d_lib: bool,
+}
+impl Into<ProjectTypeCli> for InitArgs {
+    fn into(self) -> ProjectTypeCli {
+        match (self.executable, self.s_lib, self.d_lib) {
+            (true, false, false) => ProjectTypeCli::Executable,
+            (false, true, false) => ProjectTypeCli::StaticLibrary,
+            (false, false, true) => ProjectTypeCli::DynamicLibrary,
+            _ => ProjectTypeCli::Executable
+        }
+    }
+}
+
+#[derive(Parser, Debug)]
+pub struct CleanArgs {
+    #[arg(default_value = "./", value_name = "PATH")]
+    pub path: PathBuf,
+
+    /// Clean the dependencies directory too.
+    #[arg(long)]
+    pub deps_too: bool,
+}
+
+#[derive(Parser, Debug)]
+pub struct BuildArgs {
+    #[arg(default_value = "./", value_name = "PATH")]
+    pub path: PathBuf,
+
+    /// Builds the project in release mode (optimized).
+    #[arg(long, group = "build_mode")]
+    pub release: bool,
+
+    /// Builds the project in development mode (debug info).
+    #[arg(long, group = "build_mode")]
+    pub dev: bool,
+}
+impl Into<BuildModeCli> for BuildArgs {
+    fn into(self) -> BuildModeCli {
+        match (self.release, self.dev) {
+            (true, false) => BuildModeCli::Release,
+            (false, true) => BuildModeCli::Development,
+            _ => BuildModeCli::Development
+        }
+    }
+}
+
+
+#[derive(Subcommand, Debug)]
+pub enum CommandCli {
+    /// Initializes a new project.
+    Init(InitArgs),
+    /// Cleans the project build directory and optionally dependencies directory too.
+    Clean(CleanArgs),
+    /// Builds the project.
+    Build(BuildArgs),
+    /// Builds and runs the project.
+    Run(BuildArgs),
+}
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+pub struct CLI {
+    #[command(subcommand)]
+    pub command: CommandCli,
+}
