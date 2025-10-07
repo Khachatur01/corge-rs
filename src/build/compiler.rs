@@ -1,5 +1,5 @@
 use crate::cli::BuildModeCli;
-use crate::config::ProjectType;
+use crate::config::{Profile, ProjectType};
 use crate::extension::Extension;
 use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -13,6 +13,12 @@ fn hash<P: AsRef<Path> + Hash>(path: P) -> String {
     path.hash(&mut hasher);
 
     hasher.finish().to_string()
+}
+
+fn add_flags(command: &mut Command, flags: &[String]) {
+    for flag in flags {
+        command.arg(flag);
+    }
 }
 
 /* todo: use builder pattern */
@@ -60,31 +66,33 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, profile_cli: &BuildModeCli) {
+    pub fn compile(&self, build_mode: &BuildModeCli, profile: &Profile) {
         let source = Compiler::find_source_files(&self.project_dir);
 
-        let profile_dir = self.output_dir.join(profile_cli.to_string());
+        let build_dir = self.output_dir.join(build_mode.to_string());
 
-        let cache_dir = profile_dir.join("cache");
+        let cache_dir = build_dir.join("cache");
         fs::create_dir_all(&cache_dir).unwrap();
 
-        self.compile_sources(&source, &cache_dir, &self.include_dir, false);
+        let pic: bool = matches!(self.project_type, ProjectType::DynamicLibrary);
+
+        self.compile_sources(&source, &cache_dir, &self.include_dir, pic, profile, &self.compiler_flags);
         let objects: Vec<PathBuf> = fs::read_dir(cache_dir).unwrap().map(|file| file.unwrap().path()).collect();
 
         match self.project_type {
             ProjectType::Executable => {
-                self.generate_executable(&objects, &profile_dir, &self.project_name);
+                self.generate_executable(&objects, &build_dir, &self.project_name, &self.linker_flags);
             }
             ProjectType::StaticLibrary => {
-                self.generate_static(&objects, &profile_dir, &self.project_name);
+                self.generate_static(&objects, &build_dir, &self.project_name);
             }
             ProjectType::DynamicLibrary => {
-                self.generate_dynamic(&objects, &profile_dir, &self.project_name);
+                self.generate_dynamic(&objects, &build_dir, &self.project_name, &self.linker_flags);
             }
         }
     }
 
-    fn generate_executable(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str) {
+    fn generate_executable(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
         let output_name = Extension::Executable.file_name(&output_name, &self.compiler);
 
         let mut command = Command::new(&self.compiler);
@@ -96,6 +104,8 @@ impl Compiler {
         for object in objects {
             command.arg(object);
         }
+
+        add_flags(&mut command, linker_flags);
 
         println!("Creating executable {:#?}", objects);
         println!("{:?}", command);
@@ -119,7 +129,7 @@ impl Compiler {
         command.output().unwrap();
     }
 
-    fn generate_dynamic(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str) {
+    fn generate_dynamic(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
         let output_name = Extension::DynamicLibrary.file_name(&output_name, &self.compiler);
 
         let mut command = Command::new(&self.compiler);
@@ -128,6 +138,8 @@ impl Compiler {
         command
             .arg("-o")
             .arg(output.join(output_name));
+
+        add_flags(&mut command, linker_flags);
 
         for object in objects {
             command.arg(object);
@@ -143,12 +155,16 @@ impl Compiler {
      @param: output - output directory
      @param: pic - position independent code
      */
-    fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool) {
+    fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool, profile: &Profile, compiler_flags: &[String]) {
         for source in sources {
             let mut output_file = output.join(hash(source));
             output_file.set_extension("o");
 
             let mut command = Command::new(&self.compiler);
+
+            if let Some(level) = profile.optimization_level.as_gcc_flag() {
+                command.arg(level);
+            }
 
             command
                 .arg("-I")
@@ -161,6 +177,8 @@ impl Compiler {
             command
                 .arg("-c")
                 .arg(source);
+
+            add_flags(&mut command, &compiler_flags);
 
             if pic {
                 command.arg("-fPIC");

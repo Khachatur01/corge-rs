@@ -24,8 +24,32 @@ pub struct Project {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub enum OptimizationLevel {
     None,
-    Fast,
-    Full,
+    O,
+    O1,
+    O2,
+    O3,
+    O0,
+    Os,
+    Ofast,
+    Og,
+    Oz,
+}
+
+impl OptimizationLevel {
+    pub fn as_gcc_flag(&self) -> Option<&str> {
+        match self {
+            OptimizationLevel::None => None,
+            OptimizationLevel::O => Some("-O"),
+            OptimizationLevel::O1 => Some("-O1"),
+            OptimizationLevel::O2 => Some("-O2"),
+            OptimizationLevel::O3 => Some("-O3"),
+            OptimizationLevel::O0 => Some("-O0"),
+            OptimizationLevel::Os => Some("-Os"),
+            OptimizationLevel::Ofast => Some("-Ofast"),
+            OptimizationLevel::Og => Some("-Og"),
+            OptimizationLevel::Oz => Some("-Oz"),
+        }
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

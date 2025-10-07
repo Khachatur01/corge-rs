@@ -1,9 +1,9 @@
 use crate::build::compiler::Compiler;
-use crate::cli::{BuildArgs, CleanArgs, CommandCli, InitArgs};
-use crate::config::Config;
-use crate::package_manager::resolve_dependencies;
+use crate::cli::{BuildArgs, BuildModeCli, CleanArgs, CommandCli, InitArgs};
+use crate::config::{Builder, Config, OptimizationLevel, Profile};
 use clap::Parser;
 use std::fs;
+use std::path::PathBuf;
 
 mod config;
 mod cli;
@@ -44,19 +44,35 @@ fn build(build_args: BuildArgs) {
 
     println!("Resolving dependencies...");
     if let Some(dependencies) = &config.dependencies {
-        resolve_dependencies(
+        package_manager::resolve_dependencies(
             &config.repositories.unwrap_or_default(),
             &dependencies,
             build_args.path.join("dependency").as_path()
         );
     }
 
-    let builder = config.builder.unwrap_or_default();
+    let builder: Builder = config.builder.unwrap_or_default();
+
+    let project_dir: PathBuf = build_args.path.clone();
+    let build_mode: BuildModeCli = build_args.into();
+
+    let profile = match build_mode {
+        BuildModeCli::Development => {
+            config.profiles.unwrap_or_default().development.unwrap_or_else(|| Profile {
+                optimization_level: OptimizationLevel::O
+            })
+        }
+        BuildModeCli::Release => {
+            config.profiles.unwrap_or_default().release.unwrap_or_else(|| Profile {
+                optimization_level: OptimizationLevel::Ofast
+            })
+        }
+    };
 
     Compiler::new(
-        build_args.path.clone(),
-        build_args.path.join("dependency").join("header").clone(),
-        build_args.path.join("target").clone(),
+        project_dir.clone(),
+        project_dir.join("dependency").join("header").clone(),
+        project_dir.join("target").clone(),
 
         config.project.name,
         config.project.project_type,
@@ -66,7 +82,8 @@ fn build(build_args: BuildArgs) {
         builder.compiler_flags,
         builder.linker_flags,
     ).compile(
-        &build_args.into()
+        &build_mode,
+        &profile
     );
 }
 
