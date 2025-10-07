@@ -34,6 +34,8 @@ pub struct Compiler {
     project_name: String,
     project_type: ProjectType,
 
+    dependency_manifests: Vec<Manifest>,
+
     toolchain: Toolchain,
 }
 
@@ -46,6 +48,8 @@ impl Compiler {
         project_name: String,
         project_type: ProjectType,
 
+        dependency_manifests: Vec<Manifest>,
+
         toolchain: Toolchain,
     ) -> Self {
         Self {
@@ -55,6 +59,8 @@ impl Compiler {
 
             project_name,
             project_type,
+
+            dependency_manifests,
 
             toolchain,
         }
