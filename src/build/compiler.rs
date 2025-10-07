@@ -1,5 +1,6 @@
+use crate::command_line_arguments::ProfileCli;
+use crate::config::ProjectType;
 use crate::extension::Extension;
-use crate::model::{Project, ProjectType};
 use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};
@@ -14,11 +15,15 @@ fn hash<P: AsRef<Path> + Hash>(path: P) -> String {
     hasher.finish().to_string()
 }
 
+/* todo: use builder pattern */
 #[derive(Clone)]
 pub struct Compiler {
-    project: PathBuf,
-    include: PathBuf,
-    output: PathBuf,
+    project_dir: PathBuf,
+    include_dir: PathBuf,
+    output_dir: PathBuf,
+
+    project_name: String,
+    project_type: ProjectType,
 
     compiler: String,
     archiver: String,
@@ -28,9 +33,12 @@ pub struct Compiler {
 
 impl Compiler {
     pub fn new(
-        project: PathBuf,
-        include: PathBuf,
-        output: PathBuf,
+        project_dir: PathBuf,
+        include_dir: PathBuf,
+        output_dir: PathBuf,
+
+        project_name: String,
+        project_type: ProjectType,
 
         compiler: String,
         archiver: String,
@@ -38,9 +46,12 @@ impl Compiler {
         linker_flags: Vec<String>
     ) -> Self {
         Self {
-            project,
-            include,
-            output,
+            project_dir,
+            include_dir,
+            output_dir,
+
+            project_name,
+            project_type,
 
             compiler,
             archiver,
@@ -49,25 +60,26 @@ impl Compiler {
         }
     }
 
-    pub fn compile(&self, project: &Project) {
-        let source = Compiler::find_source_files(&self.project);
+    pub fn compile(&self, profile_cli: &ProfileCli) {
+        let source = Compiler::find_source_files(&self.project_dir);
 
-        /* todo: release */
-        let cache = self.output.join("release").join("cache");
-        fs::create_dir_all(&cache).unwrap();
+        let profile_dir = self.output_dir.join(profile_cli.to_string());
 
-        self.compile_sources(&source, &cache, &self.include, false);
-        let objects: Vec<PathBuf> = fs::read_dir(cache).unwrap().map(|file| file.unwrap().path()).collect();
+        let cache_dir = profile_dir.join("cache");
+        fs::create_dir_all(&cache_dir).unwrap();
 
-        match project.project_type {
+        self.compile_sources(&source, &cache_dir, &self.include_dir, false);
+        let objects: Vec<PathBuf> = fs::read_dir(cache_dir).unwrap().map(|file| file.unwrap().path()).collect();
+
+        match self.project_type {
             ProjectType::Executable => {
-                self.generate_executable(&objects, &self.output.join("release"), &project.name);
+                self.generate_executable(&objects, &profile_dir, &self.project_name);
             }
             ProjectType::StaticLibrary => {
-                self.generate_static(&objects, &self.output.join("release"), &project.name);
+                self.generate_static(&objects, &profile_dir, &self.project_name);
             }
             ProjectType::DynamicLibrary => {
-                self.generate_dynamic(&objects, &self.output.join("release"), &project.name);
+                self.generate_dynamic(&objects, &profile_dir, &self.project_name);
             }
         }
     }

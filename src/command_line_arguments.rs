@@ -7,6 +7,7 @@ pub enum ProfileCli {
     #[default]
     Development,
 }
+
 impl Display for ProfileCli {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {

@@ -1,48 +1,51 @@
 use crate::build::compiler::Compiler;
 use crate::command_line_arguments::CommandCli;
 use crate::command_line_arguments::ProfileCli;
-use crate::dependency_management::resolve_dependencies;
-use crate::model::Config;
+use crate::package_manager::resolve_dependencies;
+use crate::config::Config;
 use clap::Parser;
 use std::fs;
 use std::path::PathBuf;
 
-mod model;
+mod config;
 mod command_line_arguments;
-mod dependency_management;
+mod package_manager;
 mod build;
 mod extension;
 
-fn build(project_directory: &PathBuf, profile_cli: &ProfileCli) {
-    println!("Building project in directory {}", project_directory.display().to_string());
-    let config_str: String = fs::read_to_string(project_directory.join("build.yaml")).unwrap();
+fn build(project_dir: &PathBuf, profile_cli: &ProfileCli) {
+    println!("Building project in directory {}", project_dir.display().to_string());
+    let config_str: String = fs::read_to_string(project_dir.join("build.yaml")).unwrap();
 
     let config: Config = serde_yaml::from_str(&config_str).unwrap();
 
-    let _ = fs::create_dir_all(project_directory.join("dependency"));
+    let _ = fs::create_dir_all(project_dir.join("dependency"));
 
     println!("Resolving dependencies...");
     if let Some(dependencies) = &config.dependencies {
         resolve_dependencies(
             &config.repositories.unwrap_or_default(),
             &dependencies,
-            project_directory.join("dependency").as_path()
+            project_dir.join("dependency").as_path()
         );
     }
 
     let builder = config.builder.unwrap_or_default();
 
     Compiler::new(
-        project_directory.clone(),
-        project_directory.join("dependency").join("header").clone(),
-        project_directory.join("target").clone(),
+        project_dir.clone(),
+        project_dir.join("dependency").join("header").clone(),
+        project_dir.join("target").clone(),
+
+        config.project.name,
+        config.project.project_type,
 
         builder.compiler,
         builder.archiver,
         builder.compiler_flags,
         builder.linker_flags,
     ).compile(
-        &config.project
+        profile_cli
     );
 }
 

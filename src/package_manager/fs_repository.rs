@@ -1,7 +1,7 @@
 use std::{fs, io};
 use std::path::Path;
-use crate::dependency_management::copy_headers;
-use crate::model::{Config, Dependency, ProjectType};
+use crate::package_manager::copy_headers;
+use crate::config::{Config, Dependency, ProjectType};
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
     fs::create_dir_all(&dst)?;

@@ -1,9 +1,9 @@
 mod fs_repository;
 mod git_repository;
 
-use crate::dependency_management::fs_repository::copy_fs_dependency;
-use crate::dependency_management::git_repository::copy_git_dependency;
-use crate::model::{Config, Dependency, Repository};
+use crate::package_manager::fs_repository::copy_fs_dependency;
+use crate::package_manager::git_repository::copy_git_dependency;
+use crate::config::{Config, Dependency, Repository};
 use std::collections::HashMap;
 use std::path::Path;
 use std::fs;
