@@ -74,9 +74,16 @@ pub enum Repository {
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
+pub enum LinkStrategy {
+    Statically,
+    Dynamically,
+}
+
+
+#[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Dependency {
     pub name: String,
-    pub version: String,
+    pub link_strategy: LinkStrategy,
     pub repository_name: String,
 }
 
