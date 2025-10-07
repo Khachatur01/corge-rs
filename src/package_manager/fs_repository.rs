@@ -17,24 +17,21 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
     Ok(())
 }
 
-pub fn copy_fs_dependency(repository_path: &Path, dependency: &Dependency, output_directory: &Path) -> Config {
+pub fn copy_fs_dependency(repository_path: &Path, dependency: &Dependency, output_directory: &Path) -> Option<Config> {
     println!("Copying dependency '{}' from 'fs' repository {:?}", dependency.name, repository_path);
 
     /* todo: check if dependency already exists */
 
+    let header_dir = &output_directory.join("header").join(&dependency.name);
+    let source_dir = &output_directory.join("source").join(&dependency.name);
+
     let dependency_path = repository_path.join(&dependency.name);
-    let src_path = dependency_path.join("src");
+    copy_dir_all(dependency_path, source_dir).unwrap();
 
-    let config_str = fs::read_to_string(dependency_path.join("build.yaml")).unwrap();
-    let config: Config = serde_yaml::from_str(&config_str).unwrap();
+    copy_headers(&source_dir.join("src"), header_dir);
 
-    if let ProjectType::Executable = &config.project.project_type {
-        panic!("Executable dependencies are not supported");
-    }
-
-    copy_dir_all(dependency_path, output_directory.join("source").join(&dependency.name)).unwrap();
-
-    copy_headers(src_path.as_path(), output_directory.join("header").join(&dependency.name).as_path());
-
-    config
+    fs::read_to_string(source_dir.join("build.yaml"))
+        .ok()
+        .map(|config_str: String| serde_yaml::from_str(&config_str))?
+        .ok()
 }

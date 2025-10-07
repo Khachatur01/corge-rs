@@ -29,7 +29,7 @@ fn copy_headers(src_path: &Path, dst_path: &Path) {
     }
 }
 
-fn copy_dependency(registry: &Repository, dependency: &Dependency, output_directory: &Path) -> Config {
+fn copy_dependency(registry: &Repository, dependency: &Dependency, output_directory: &Path) -> Option<Config> {
     match registry {
         Repository::Git { url, branch } => copy_git_dependency(
             url,
@@ -53,12 +53,18 @@ pub fn resolve_dependencies(repositories: &HashMap<String, Repository>, dependen
 
         let config = copy_dependency(repository, &dependency, output_directory);
 
-        if let Some(dependencies) = &config.dependencies {
-            resolve_dependencies(
-                &config.repositories.unwrap_or_default(),
-                &dependencies,
-                output_directory
-            );
-        }
+        let Some(config) = config else {
+            continue;
+        };
+
+        let Some(dependencies) = &config.dependencies else {
+            continue;
+        };
+
+        resolve_dependencies(
+            &config.repositories.unwrap_or_default(),
+            &dependencies,
+            output_directory
+        );
     }
 }

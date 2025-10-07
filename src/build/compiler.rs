@@ -163,7 +163,7 @@ impl Compiler {
 
             command
                 .arg("-o")
-                .arg(output_file);
+                .arg(&output_file);
 
             command
                 .arg("-c")
@@ -175,7 +175,7 @@ impl Compiler {
                 command.arg("-fPIC");
             }
 
-            println!("Compiling {:?}", source);
+            println!("Compiling {:?} to {:?}", source, output_file);
             println!("{:?}", command);
             command.output().unwrap();
         }
