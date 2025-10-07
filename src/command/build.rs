@@ -1,6 +1,6 @@
 use std::fs;
 use std::path::PathBuf;
-use crate::build::compiler::Compiler;
+use crate::compiler::Compiler;
 use crate::cli::{BuildArgs, BuildModeCli};
 use crate::config::{Config, OptimizationLevel, Profile, Toolchain};
 use crate::package_manager;

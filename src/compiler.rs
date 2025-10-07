@@ -148,8 +148,9 @@ impl Compiler {
      */
     fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool, profile: &Profile, compiler_flags: &[String]) {
         for source in sources {
-            let mut output_file = output.join(hash(source));
-            output_file.set_extension("o");
+            let output_name = Extension::Object.file_name(&hash(source), &self.toolchain.compiler);
+
+            let output_file = output.join(output_name);
 
             let mut command = Command::new(&self.toolchain.compiler);
 

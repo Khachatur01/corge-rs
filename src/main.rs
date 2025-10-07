@@ -4,9 +4,9 @@ use clap::Parser;
 mod config;
 mod cli;
 mod package_manager;
-mod build;
 mod extension;
 mod command;
+mod compiler;
 
 fn main() {
     let args = cli::CLI::parse();
