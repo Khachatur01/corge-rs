@@ -1,3 +1,4 @@
+use std::fmt::Debug;
 use crate::cli::BuildModeCli;
 use crate::config::{Profile, ProjectType, Toolchain};
 use crate::tools::extension_manager::Extension;
@@ -6,11 +7,13 @@ use std::hash::{DefaultHasher, Hash, Hasher};
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
-fn hash<P: AsRef<Path> + Hash>(path: P) -> String {
-    /* todo: implement a logic to read source file concatenate it with its path then hash it */
+fn hash<P: AsRef<Path> + Hash + Debug>(path: P) -> String {
+    let content = fs::read_to_string(&path).unwrap();
+    let file = format!("{:?}-{}", path, content);
+
     let mut hasher = DefaultHasher::new();
 
-    path.hash(&mut hasher);
+    file.hash(&mut hasher);
 
     hasher.finish().to_string()
 }
@@ -21,7 +24,6 @@ fn add_flags(command: &mut Command, flags: &[String]) {
     }
 }
 
-/* todo: use builder pattern */
 #[derive(Clone)]
 pub struct Compiler {
     project_dir: PathBuf,
@@ -147,6 +149,7 @@ impl Compiler {
      @param: pic - position independent code
      */
     fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool, profile: &Profile, compiler_flags: &[String]) {
+        /* todo: add parallel compilation support */
         for source in sources {
             let output_name = Extension::Object.file_name(&hash(source), &self.toolchain.compiler);
 
