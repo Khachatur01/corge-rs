@@ -1,5 +1,5 @@
 [package]
-name = "corge" # c + forge
+name = "corge-rs" # c + forge
 version = "0.1.0"
 edition = "2024"
 
