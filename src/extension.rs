@@ -1,6 +1,6 @@
 use std::process::Command;
 use std::str::FromStr;
-use target_lexicon::{OperatingSystem, ParseError, Triple};
+use target_lexicon::{OperatingSystem, Triple};
 
 pub enum Extension {
     Object,
