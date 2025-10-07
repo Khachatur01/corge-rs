@@ -70,6 +70,10 @@ pub struct BuildArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
 
+    /// Selects the toolchain to use from the build.yaml file.
+    #[arg(long, value_name = "TOOLCHAIN")]
+    pub toolchain: Option<String>,
+
     /// Builds the project in release mode (optimized).
     #[arg(long, group = "build_mode")]
     pub release: bool,

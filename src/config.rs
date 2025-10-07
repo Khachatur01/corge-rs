@@ -54,6 +54,7 @@ impl OptimizationLevel {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Profile {
+    /// https://gcc.gnu.org/onlinedocs/gcc/Optimize-Options.html
     pub optimization_level: OptimizationLevel,
 }
 
@@ -79,14 +80,14 @@ pub struct Dependency {
     pub repository_name: String,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Builder {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Toolchain {
     pub compiler: String,
     pub archiver: String,
     pub compiler_flags: Vec<String>,
     pub linker_flags: Vec<String>,
 }
-impl Default for Builder {
+impl Default for Toolchain {
     fn default() -> Self {
         Self {
             compiler: "gcc".to_string(),
@@ -103,5 +104,5 @@ pub struct Config {
     pub profiles: Option<Profiles>,
     pub repositories: Option<HashMap<String, Repository>>,
     pub dependencies: Option<Vec<Dependency>>,
-    pub builder: Option<Builder>,
+    pub toolchains: Option<HashMap<String, Toolchain>>
 }

@@ -1,6 +1,6 @@
 use crate::build::compiler::Compiler;
 use crate::cli::{BuildArgs, BuildModeCli, CleanArgs, CommandCli, InitArgs};
-use crate::config::{Builder, Config, OptimizationLevel, Profile};
+use crate::config::{Toolchain, Config, OptimizationLevel, Profile};
 use clap::Parser;
 use std::fs;
 use std::path::PathBuf;
@@ -51,7 +51,12 @@ fn build(build_args: BuildArgs) {
         );
     }
 
-    let builder: Builder = config.builder.unwrap_or_default();
+    /* remove toolchain from config to get it to avoid cloning it */
+    let (toolchain_name, toolchain) =
+        match &build_args.toolchain {
+            None => ("default".to_string(), Toolchain::default()),
+            Some(toolchain_name) => (toolchain_name.clone(), config.toolchains.unwrap_or_default().remove(toolchain_name).unwrap()),
+        };
 
     let project_dir: PathBuf = build_args.path.clone();
     let build_mode: BuildModeCli = build_args.into();
@@ -72,15 +77,12 @@ fn build(build_args: BuildArgs) {
     Compiler::new(
         project_dir.clone(),
         project_dir.join("dependency").join("header").clone(),
-        project_dir.join("target").clone(),
+        project_dir.join("target").join(toolchain_name).clone(),
 
         config.project.name,
         config.project.project_type,
 
-        builder.compiler,
-        builder.archiver,
-        builder.compiler_flags,
-        builder.linker_flags,
+        toolchain
     ).compile(
         &build_mode,
         &profile

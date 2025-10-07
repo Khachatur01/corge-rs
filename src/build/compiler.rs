@@ -1,5 +1,5 @@
 use crate::cli::BuildModeCli;
-use crate::config::{Profile, ProjectType};
+use crate::config::{Profile, ProjectType, Toolchain};
 use crate::extension::Extension;
 use std::fs;
 use std::hash::{DefaultHasher, Hash, Hasher};
@@ -31,10 +31,7 @@ pub struct Compiler {
     project_name: String,
     project_type: ProjectType,
 
-    compiler: String,
-    archiver: String,
-    compiler_flags: Vec<String>,
-    linker_flags: Vec<String>,
+    toolchain: Toolchain,
 }
 
 impl Compiler {
@@ -46,10 +43,7 @@ impl Compiler {
         project_name: String,
         project_type: ProjectType,
 
-        compiler: String,
-        archiver: String,
-        compiler_flags: Vec<String>,
-        linker_flags: Vec<String>
+        toolchain: Toolchain,
     ) -> Self {
         Self {
             project_dir,
@@ -59,10 +53,7 @@ impl Compiler {
             project_name,
             project_type,
 
-            compiler,
-            archiver,
-            compiler_flags,
-            linker_flags,
+            toolchain,
         }
     }
 
@@ -76,26 +67,26 @@ impl Compiler {
 
         let pic: bool = matches!(self.project_type, ProjectType::DynamicLibrary);
 
-        self.compile_sources(&source, &cache_dir, &self.include_dir, pic, profile, &self.compiler_flags);
+        self.compile_sources(&source, &cache_dir, &self.include_dir, pic, profile, &self.toolchain.compiler_flags);
         let objects: Vec<PathBuf> = fs::read_dir(cache_dir).unwrap().map(|file| file.unwrap().path()).collect();
 
         match self.project_type {
             ProjectType::Executable => {
-                self.generate_executable(&objects, &build_dir, &self.project_name, &self.linker_flags);
+                self.generate_executable(&objects, &build_dir, &self.project_name, &self.toolchain.linker_flags);
             }
             ProjectType::StaticLibrary => {
                 self.generate_static(&objects, &build_dir, &self.project_name);
             }
             ProjectType::DynamicLibrary => {
-                self.generate_dynamic(&objects, &build_dir, &self.project_name, &self.linker_flags);
+                self.generate_dynamic(&objects, &build_dir, &self.project_name, &self.toolchain.linker_flags);
             }
         }
     }
 
     fn generate_executable(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
-        let output_name = Extension::Executable.file_name(&output_name, &self.compiler);
+        let output_name = Extension::Executable.file_name(&output_name, &self.toolchain.compiler);
 
-        let mut command = Command::new(&self.compiler);
+        let mut command = Command::new(&self.toolchain.compiler);
 
         command
             .arg("-o")
@@ -113,9 +104,9 @@ impl Compiler {
     }
 
     fn generate_static(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str) {
-        let output_name = Extension::StaticLibrary.file_name(&output_name, &self.compiler);
+        let output_name = Extension::StaticLibrary.file_name(&output_name, &self.toolchain.compiler);
 
-        let mut command = Command::new(&self.archiver);
+        let mut command = Command::new(&self.toolchain.archiver);
         command.arg("rcs");
 
         command.arg(output.join(output_name));
@@ -130,9 +121,9 @@ impl Compiler {
     }
 
     fn generate_dynamic(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
-        let output_name = Extension::DynamicLibrary.file_name(&output_name, &self.compiler);
+        let output_name = Extension::DynamicLibrary.file_name(&output_name, &self.toolchain.compiler);
 
-        let mut command = Command::new(&self.compiler);
+        let mut command = Command::new(&self.toolchain.compiler);
         command.arg("-shared");
 
         command
@@ -160,7 +151,7 @@ impl Compiler {
             let mut output_file = output.join(hash(source));
             output_file.set_extension("o");
 
-            let mut command = Command::new(&self.compiler);
+            let mut command = Command::new(&self.toolchain.compiler);
 
             if let Some(level) = profile.optimization_level.as_gcc_flag() {
                 command.arg(level);
