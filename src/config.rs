@@ -82,11 +82,11 @@ pub enum LinkStrategy {
 }
 
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Dependency {
     pub name: String,
     pub link_strategy: LinkStrategy,
-    pub repository_name: String,
+    pub registry_name: String,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -113,7 +113,7 @@ pub struct Config {
     #[serde(default)]
     pub profiles: Profiles,
     #[serde(default)]
-    pub repositories: HashMap<String, Registry>,
+    pub registries: HashMap<String, Registry>,
     #[serde(default)]
     pub dependencies: Vec<Dependency>,
     #[serde(default)]

@@ -24,7 +24,7 @@ pub fn fetch_fs_dependency(
 ) -> Result<()> {
     let dependency_path = repository_path.join(&dependency.name);
 
-    copy_dir_all(dependency_path, source_directory)?;
+    copy_dir_all(dependency_path, source_directory.join(&dependency.name))?;
 
     Ok(())
 }

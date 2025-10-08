@@ -1,24 +1,16 @@
 use crate::cli::CommandCli;
 use clap::Parser;
-use std::io;
-use tools::command;
 
 mod config;
 mod cli;
-mod tools;
 mod std_command_ext;
 mod stage;
-// #[derive(Debug)]
-// pub enum CorgeError {
-//     SerdeError(String),
-//     ToolchainNotFound(String),
-//     RepositoryNotFound(String),
-//     GitCommandExecuteError(String),
-//     FSRepositoryFetchError(io::Error),
-//     CopyHeadersError(io::Error),
-// }
+mod command;
+mod extension_manager;
 
 fn main() {
+    simple_logger::SimpleLogger::new().env().init().unwrap();
+
     let args = cli::CLI::parse();
 
     match args.command {

@@ -1,7 +1,8 @@
-pub mod parse_configuration;
-mod resolve_dependencies;
-mod fetch_dependencies;
-mod builder;
+pub mod configuration_parser;
+pub mod dependency_source_fetcher;
+pub mod dependency_include_fetcher;
+pub mod builder;
+pub mod dependencies_builder;
 // use crate::config::{Dependency, Registry};
 
 // pub struct ConfigurationParser {

@@ -15,7 +15,11 @@ impl ConfigurationParser {
     }
 
     pub fn parse(&self) -> Result<Config> {
-        let config_str: String = fs::read_to_string(self.project_directory.join("build.yaml"))
+        let config_path: PathBuf = self.project_directory.join("build.yaml");
+
+        log::info!("Parsing configuration file {:?}", &config_path);
+
+        let config_str: String = fs::read_to_string(config_path)
             .context("Failed to read 'build.yaml' file")?;
 
         let config: Config = serde_yaml::from_str(&config_str)

@@ -1,8 +1,8 @@
 use crate::config::Dependency;
+use crate::std_command_ext::ExecuteCommand;
+use anyhow::Result;
 use std::path::Path;
 use std::process::Command;
-use anyhow::{Context, Result};
-use crate::std_command_ext::{ExecuteCommand};
 
 pub fn fetch_git_dependency(url: &str, branch: &str, dependency: &Dependency, source_directory: &Path) -> Result<()> {
     let mut command = Command::new("git");
@@ -11,7 +11,7 @@ pub fn fetch_git_dependency(url: &str, branch: &str, dependency: &Dependency, so
     command.arg("--single-branch");
     command.arg("--branch");
     command.arg(branch);
-    command.arg(source_directory.join("source").join(&dependency.name));
+    command.arg(source_directory.join(&dependency.name));
 
     command.execute(true)?;
 
