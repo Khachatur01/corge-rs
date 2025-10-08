@@ -1,6 +1,7 @@
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
 pub enum ProjectType {
@@ -73,8 +74,9 @@ pub enum Repository {
     FileSystem(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Default)]
+#[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub enum LinkStrategy {
+    #[default]
     Statically,
     Dynamically,
 }
@@ -108,8 +110,34 @@ impl Default for Toolchain {
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Config {
     pub project: Project,
-    pub profiles: Option<Profiles>,
-    pub repositories: Option<HashMap<String, Repository>>,
-    pub dependencies: Option<Vec<Dependency>>,
-    pub toolchains: Option<HashMap<String, Toolchain>>
+    #[serde(default)]
+    pub profiles: Profiles,
+    #[serde(default)]
+    pub repositories: HashMap<String, Repository>,
+    #[serde(default)]
+    pub dependencies: Vec<Dependency>,
+    #[serde(default)]
+    pub toolchains: HashMap<String, Toolchain>
+}
+
+impl Config {
+    /** Returns the toolchain name on an error case */
+    pub fn toolchain(&self, toolchain_name: Option<String>) -> Result<(String, Toolchain)> {
+        match toolchain_name {
+            None => {
+                let name = "default".to_string();
+                let toolchain = Toolchain::default();
+
+                Ok((name, toolchain))
+            },
+            Some(name) => {
+                let toolchain = self.toolchains
+                    .get(&name)
+                    .cloned()
+                    .ok_or_else(|| anyhow::anyhow!("Toolchain '{}' not found", name))?;
+
+                Ok((name, toolchain))
+            }
+        }
+    }
 }

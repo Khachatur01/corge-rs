@@ -3,13 +3,6 @@ use std::fmt::Display;
 use std::path::PathBuf;
 
 #[derive(Clone, Debug, Default)]
-pub enum BuildModeCli {
-    #[default]
-    Development,
-    Release,
-}
-
-#[derive(Clone, Debug, Default)]
 pub enum ProjectTypeCli {
     #[default]
     Executable,
@@ -17,6 +10,13 @@ pub enum ProjectTypeCli {
     DynamicLibrary,
 }
 
+
+#[derive(Clone, Debug, Default)]
+pub enum BuildModeCli {
+    #[default]
+    Development,
+    Release,
+}
 impl Display for BuildModeCli {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let str = match self {
@@ -82,8 +82,8 @@ pub struct BuildArgs {
     #[arg(long, group = "build_mode")]
     pub dev: bool,
 }
-impl Into<BuildModeCli> for BuildArgs {
-    fn into(self) -> BuildModeCli {
+impl BuildArgs {
+    pub fn build_mode(&self) -> BuildModeCli {
         match (self.release, self.dev) {
             (true, false) => BuildModeCli::Release,
             (false, true) => BuildModeCli::Development,

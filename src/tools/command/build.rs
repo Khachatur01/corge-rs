@@ -1,37 +1,38 @@
 use crate::cli::{BuildArgs, BuildModeCli};
-use crate::config::{Config, OptimizationLevel, Profile, Toolchain};
+use crate::config::{Config, OptimizationLevel, Profile};
 use crate::tools::compiler::Compiler;
-use crate::tools::package_manager;
+use crate::tools::manifest_manager::{get_dependency_manifests, Manifest};
+use crate::tools::dependency_manager;
+use anyhow::{Context, Result};
 use std::fs;
 use std::path::PathBuf;
 
-pub fn build(build_args: BuildArgs) {
-    println!("Building project in directory {:?}", build_args.path);
+pub fn build(build_args: BuildArgs) -> Result<()> {
+    log::info!("Building project in directory {:?}", build_args.path);
 
-    let config_str: String = fs::read_to_string(build_args.path.join("build.yaml")).unwrap();
+    let config_str: String = fs::read_to_string(build_args.path.join("build.yaml"))
+        .context("Failed to read 'build.yaml' file")?;
 
-    let config: Config = serde_yaml::from_str(&config_str).unwrap();
+    let mut config: Config = serde_yaml::from_str(&config_str)
+        .context("Failed to parse 'build.yaml' file")?;
 
-    let _ = fs::create_dir_all(build_args.path.join("dependency"));
+    fs::create_dir_all(build_args.path.join("dependency"))
+        .context("Failed to create 'dependency' directory")?;
 
-    println!("Resolving dependencies...");
-    if let Some(dependencies) = &config.dependencies {
-        package_manager::resolve_dependencies(
-            &config.repositories.unwrap_or_default(),
-            &dependencies,
-            build_args.path.join("dependency").as_path()
-        );
-    }
-
-    /* remove toolchain from config to get it to avoid cloning it */
-    let (toolchain_name, toolchain) =
-        match &build_args.toolchain {
-            None => ("default".to_string(), Toolchain::default()),
-            Some(toolchain_name) => (toolchain_name.clone(), config.toolchains.unwrap_or_default().remove(toolchain_name).unwrap()),
-        };
+    let (toolchain_name, toolchain) = config.toolchain(build_args.toolchain.clone())
+        .context("Failed to find toolchain in build.yaml file")?;
 
     let project_dir: PathBuf = build_args.path.clone();
-    let build_mode: BuildModeCli = build_args.into();
+    let build_mode: BuildModeCli = build_args.build_mode();
+
+    log::info!("Fetching dependencies...");
+    dependency_manager::fetch_dependencies(
+        &config.repositories,
+        &config.dependencies,
+        &build_args.path.join("dependency")
+    ).context("Failed to fetch dependencies")?;
+
+    let manifests: Vec<Manifest> = get_dependency_manifests(&project_dir, &config.dependencies);
 
     let profile = match build_mode {
         BuildModeCli::Development => {
@@ -54,9 +55,13 @@ pub fn build(build_args: BuildArgs) {
         config.project.name,
         config.project.project_type,
 
+        manifests,
+
         toolchain
     ).compile(
         &build_mode,
         &profile
     );
+
+    Ok(())
 }

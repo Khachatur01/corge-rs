@@ -1,6 +1,7 @@
 use crate::config::Dependency;
 use std::path::Path;
 use std::{fs, io};
+use anyhow::{Context, Result};
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
     fs::create_dir_all(&dst)?;
@@ -16,9 +17,14 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
     Ok(())
 }
 
-pub fn copy_fs_dependency(repository_path: &Path, dependency: &Dependency, source_directory: &Path) {
-    println!("Copying dependency '{}' from 'fs' repository {:?}", dependency.name, repository_path);
-
+pub fn fetch_fs_dependency(
+    repository_path: &Path,
+    dependency: &Dependency,
+    source_directory: &Path
+) -> Result<()> {
     let dependency_path = repository_path.join(&dependency.name);
-    copy_dir_all(dependency_path, source_directory).unwrap();
+
+    copy_dir_all(dependency_path, source_directory)?;
+
+    Ok(())
 }

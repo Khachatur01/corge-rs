@@ -1,10 +1,10 @@
 use crate::config::Dependency;
 use std::path::Path;
 use std::process::Command;
+use anyhow::{Context, Result};
+use crate::std_command_ext::{ExecuteCommand};
 
-pub fn copy_git_dependency(url: &str, branch: &str, dependency: &Dependency, source_directory: &Path) {
-    println!("Copying dependency '{}' from 'git' repository {}", dependency.name, url);
-
+pub fn fetch_git_dependency(url: &str, branch: &str, dependency: &Dependency, source_directory: &Path) -> Result<()> {
     let mut command = Command::new("git");
     command.arg("clone");
     command.arg(format!("{}/{}", url, dependency.name));
@@ -13,7 +13,7 @@ pub fn copy_git_dependency(url: &str, branch: &str, dependency: &Dependency, sou
     command.arg(branch);
     command.arg(source_directory.join("source").join(&dependency.name));
 
-    println!("{:?}", command);
+    command.execute(true)?;
 
-    command.output().unwrap();
+    Ok(())
 }

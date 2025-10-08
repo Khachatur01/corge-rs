@@ -1,6 +1,8 @@
 use crate::cli::BuildModeCli;
-use crate::config::{Profile, ProjectType, Toolchain};
+use crate::config::{LinkStrategy, Profile, ProjectType, Toolchain};
+use crate::tools::manifest_manager::Manifest;
 use crate::tools::extension_manager::Extension;
+use crate::tools::source_manager::find_source_files;
 use sha2::{Digest, Sha256};
 use std::fmt::Debug;
 use std::fs;
@@ -67,7 +69,7 @@ impl Compiler {
     }
 
     pub fn compile(&self, build_mode: &BuildModeCli, profile: &Profile) {
-        let source = Compiler::find_source_files(&self.project_dir);
+        let project_sources = find_source_files(&self.project_dir.join("src"));
 
         let build_dir = self.output_dir.join(build_mode.to_string());
 
@@ -76,24 +78,26 @@ impl Compiler {
 
         let pic: bool = matches!(self.project_type, ProjectType::DynamicLibrary);
 
-        self.compile_sources(&source, &cache_dir, &self.include_dir, pic, profile, &self.toolchain.compiler_flags);
+        self.compile_sources(&project_sources, &cache_dir, pic, profile);
+        self.compile_dependencies(&cache_dir.join("dependency"), profile);
+
         let objects: Vec<PathBuf> = fs::read_dir(cache_dir).unwrap().map(|file| file.unwrap().path()).collect();
 
         match self.project_type {
             ProjectType::Executable => {
-                self.generate_executable(&objects, &build_dir, &self.project_name, &self.toolchain.linker_flags);
+                self.generate_executable(&objects, &build_dir);
             }
             ProjectType::StaticLibrary => {
-                self.generate_static(&objects, &build_dir, &self.project_name);
+                self.generate_static(&objects, &build_dir);
             }
             ProjectType::DynamicLibrary => {
-                self.generate_dynamic(&objects, &build_dir, &self.project_name, &self.toolchain.linker_flags);
+                self.generate_dynamic(&objects, &build_dir);
             }
         }
     }
 
-    fn generate_executable(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
-        let output_name = Extension::Executable.file_name(&output_name, &self.toolchain.compiler);
+    fn generate_executable(&self, objects: &[PathBuf], output: &PathBuf) {
+        let output_name = Extension::Executable.file_name(&self.project_name, &self.toolchain.compiler);
 
         let mut command = Command::new(&self.toolchain.compiler);
 
@@ -105,15 +109,15 @@ impl Compiler {
             command.arg(object);
         }
 
-        add_flags(&mut command, linker_flags);
+        add_flags(&mut command, &self.toolchain.linker_flags);
 
         println!("Creating executable {:#?}", objects);
         println!("{:?}", command);
         command.output().unwrap();
     }
 
-    fn generate_static(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str) {
-        let output_name = Extension::StaticLibrary.file_name(&output_name, &self.toolchain.compiler);
+    fn generate_static(&self, objects: &[PathBuf], output: &PathBuf) {
+        let output_name = Extension::StaticLibrary.file_name(&self.project_name, &self.toolchain.compiler);
 
         let mut command = Command::new(&self.toolchain.archiver);
         command.arg("rcs");
@@ -129,8 +133,8 @@ impl Compiler {
         command.output().unwrap();
     }
 
-    fn generate_dynamic(&self, objects: &[PathBuf], output: &PathBuf, output_name: &str, linker_flags: &[String]) {
-        let output_name = Extension::DynamicLibrary.file_name(&output_name, &self.toolchain.compiler);
+    fn generate_dynamic(&self, objects: &[PathBuf], output: &PathBuf) {
+        let output_name = Extension::DynamicLibrary.file_name(&self.project_name, &self.toolchain.compiler);
 
         let mut command = Command::new(&self.toolchain.compiler);
         command.arg("-shared");
@@ -139,7 +143,7 @@ impl Compiler {
             .arg("-o")
             .arg(output.join(output_name));
 
-        add_flags(&mut command, linker_flags);
+        add_flags(&mut command, &self.toolchain.linker_flags);
 
         for object in objects {
             command.arg(object);
@@ -155,7 +159,7 @@ impl Compiler {
      @param: output - output directory
      @param: pic - position independent code
      */
-    fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, include: &PathBuf, pic: bool, profile: &Profile, compiler_flags: &[String]) {
+    fn compile_sources(&self, sources: &[PathBuf], output: &PathBuf, pic: bool, profile: &Profile) {
         /* todo: add parallel compilation support */
         for source in sources {
             let output_stem = hash(source);
@@ -176,7 +180,7 @@ impl Compiler {
 
             command
                 .arg("-I")
-                .arg(include);
+                .arg(&self.include_dir);
 
             command
                 .arg("-o")
@@ -186,7 +190,7 @@ impl Compiler {
                 .arg("-c")
                 .arg(source);
 
-            add_flags(&mut command, &compiler_flags);
+            add_flags(&mut command, &self.toolchain.compiler_flags);
 
             if pic {
                 command.arg("-fPIC");
@@ -198,20 +202,18 @@ impl Compiler {
         }
     }
 
-    fn find_source_files(directory: &Path) -> Vec<PathBuf> {
-        let mut files = Vec::new();
-
-        for file in fs::read_dir(directory).unwrap() {
-            let file = file.unwrap();
-
-            if file.path().is_dir() {
-                let inner_files = Compiler::find_source_files(file.path().as_path());
-                files.extend(inner_files);
-            } else if let Some(extension) = file.path().extension() && extension == "c" {
-                files.push(file.path());
-            }
-        }
-
-        files
+    fn compile_dependencies(&self, output: &PathBuf, profile: &Profile) {
+        self.dependency_manifests
+            .iter()
+            .for_each(|manifest| {
+                match manifest.link_strategy {
+                    LinkStrategy::Statically => {
+                        self.compile_sources(&manifest.sources, &output.join(&manifest.name), false, profile);
+                    }
+                    LinkStrategy::Dynamically => {
+                        self.compile_sources(&manifest.sources, &output.join(&manifest.name), true, profile);
+                    }
+                }
+            })
     }
 }
