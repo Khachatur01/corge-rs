@@ -1,7 +1,7 @@
 mod fs_repository;
 mod git_repository;
 
-use crate::config::{Config, Dependency, Repository};
+use crate::config::{Config, Dependency, Registry};
 use crate::tools::dependency_manager::fs_repository::fetch_fs_dependency;
 use crate::tools::dependency_manager::git_repository::fetch_git_dependency;
 use std::collections::HashMap;
@@ -41,9 +41,9 @@ fn copy_headers(src_path: &PathBuf, dst_path: &PathBuf) -> Result<()> {
     Ok(())
 }
 
-fn fetch_dependency(registry: &Repository, dependency: &Dependency, output_directory: &Path) -> Result<()> {
+fn fetch_dependency(registry: &Registry, dependency: &Dependency, output_directory: &Path) -> Result<()> {
     match registry {
-        Repository::Git { url, branch } => {
+        Registry::Git { url, branch } => {
             log::info!("Fetching dependency '{}' from 'git' repository {}", dependency.name, url);
             fetch_git_dependency(
                 url,
@@ -52,7 +52,7 @@ fn fetch_dependency(registry: &Repository, dependency: &Dependency, output_direc
                 output_directory
             ).with_context(|| format!("Failed to fetch dependency '{}' from 'git' repository {}", dependency.name, url))
         },
-        Repository::FileSystem(repository_path) => {
+        Registry::FileSystem(repository_path) => {
             log::info!("Fetching dependency '{}' from 'fs' repository {:?}", dependency.name, repository_path);
             fetch_fs_dependency(
                 repository_path.as_ref(),
@@ -64,7 +64,7 @@ fn fetch_dependency(registry: &Repository, dependency: &Dependency, output_direc
 }
 
 pub fn fetch_dependencies(
-    repositories: &HashMap<String, Repository>,
+    repositories: &HashMap<String, Registry>,
     dependencies: &[Dependency],
     output_directory: &Path
 ) -> Result<()> {

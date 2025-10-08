@@ -7,7 +7,7 @@ mod config;
 mod cli;
 mod tools;
 mod std_command_ext;
-
+mod stage;
 // #[derive(Debug)]
 // pub enum CorgeError {
 //     SerdeError(String),

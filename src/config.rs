@@ -66,7 +66,7 @@ pub struct Profiles {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum Repository {
+pub enum Registry {
     Git {
         url: String,
         branch: String,
@@ -113,7 +113,7 @@ pub struct Config {
     #[serde(default)]
     pub profiles: Profiles,
     #[serde(default)]
-    pub repositories: HashMap<String, Repository>,
+    pub repositories: HashMap<String, Registry>,
     #[serde(default)]
     pub dependencies: Vec<Dependency>,
     #[serde(default)]
