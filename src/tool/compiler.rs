@@ -53,8 +53,6 @@ impl Compiler {
     */
     pub fn compile(&self, source_files: &[PathBuf], target_path: &PathBuf, pic: bool) -> Result<()> {
         for source_file in source_files {
-            log::info!("Compiling {:?} into {}", source_file, target_path.display());
-
             let output_stem = hash(source_file)
                 .with_context(|| format!("Failed to hash source file {:?}", source_file))?;
 
@@ -67,6 +65,7 @@ impl Compiler {
                 log::info!("Skipping already compiled file {:?}", source_file);
                 continue;
             }
+            log::info!("Compiling {:?} into {}", source_file, target_path.display());
 
             let mut command = Command::new(&self.toolchain.compiler);
 

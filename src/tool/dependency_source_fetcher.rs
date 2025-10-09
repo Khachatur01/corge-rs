@@ -66,7 +66,7 @@ impl DependencySourceFetcher {
     }
 }
 
-fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_directory: &PathBuf) -> anyhow::Result<()> {
+fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_directory: &PathBuf) -> Result<()> {
     match registry {
         Registry::Git { url, branch } => {
             log::info!("Fetching dependency '{}' from 'git' repository {}", dependency.name, url);

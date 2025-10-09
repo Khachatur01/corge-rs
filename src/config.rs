@@ -74,18 +74,10 @@ pub enum Registry {
     FileSystem(String),
 }
 
-#[derive(Serialize, Deserialize, Debug, Default, Clone)]
-pub enum LinkStrategy {
-    #[default]
-    Statically,
-    Dynamically,
-}
-
 
 #[derive(Serialize, Deserialize, Debug, Default, Clone)]
 pub struct Dependency {
     pub name: String,
-    pub link_strategy: LinkStrategy,
     pub registry_name: String,
 }
 

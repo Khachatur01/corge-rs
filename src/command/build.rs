@@ -6,7 +6,7 @@ use anyhow::{Context, Result};
 use crate::cli::{BuildArgs, BuildModeCli};
 use crate::command::build::dependency_path::DependencyPath;
 use crate::command::build::target_path::TargetPath;
-use crate::config::{Config, LinkStrategy, OptimizationLevel, Profile, ProjectType};
+use crate::config::{Config, OptimizationLevel, Profile, ProjectType};
 use crate::tool::compiler::Compiler;
 use crate::tool::configuration_parser::ConfigurationParser;
 use crate::tool::dependency_include_fetcher::DependencyIncludeFetcher;
@@ -44,6 +44,9 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     /** Compilation */
     let compiler = Compiler::new(profile, toolchain.clone(), dependency_path.include.clone());
 
+    /* generate position-independent code if the project is a dynamic library */
+    let pic = matches!(config.project.project_type, ProjectType::DynamicLibrary);
+
     /* compile dependencies artifacts */
     for artifact in &artifacts {
         let target_path = target_path.build_mode.toolchain.cache.dependency.join(&artifact.dependency.name);
@@ -52,9 +55,6 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
 
         let source_files = fetch_files(&artifact.path, "c")
             .with_context(|| format!("Failed to fetch source files for dependency {}", &artifact.dependency.name))?;
-
-        /* generate position-independent code if the dependency is dynamically linked */
-        let pic = matches!(artifact.dependency.link_strategy, LinkStrategy::Dynamically);
 
         compiler.compile(&source_files, &target_path, pic)
             .with_context(|| format!("Failed to compile dependency '{}' artifact", &artifact.dependency.name))?;
@@ -65,8 +65,6 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
         .context("Failed to fetch source files for project")?;
 
     let target_path = target_path.build_mode.toolchain.cache.project;
-    /* generate position-independent code if the project is a dynamic library */
-    let pic = matches!(config.project.project_type, ProjectType::DynamicLibrary);
 
     compiler.compile(&source_files, &target_path, pic)
         .context("Failed to compile project files")?;
