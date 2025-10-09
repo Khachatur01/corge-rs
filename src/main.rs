@@ -4,7 +4,7 @@ use clap::Parser;
 mod config;
 mod cli;
 mod std_command_ext;
-mod stage;
+mod tool;
 mod command;
 mod extension_manager;
 

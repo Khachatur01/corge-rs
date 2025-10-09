@@ -6,10 +6,10 @@ use crate::cli::{BuildArgs, BuildModeCli};
 use crate::command::build::dependency_path::DependencyPath;
 use crate::command::build::target_path::TargetPath;
 use crate::config::{Config, OptimizationLevel, Profile};
-use crate::stage::configuration_parser::ConfigurationParser;
-use crate::stage::dependencies_builder::DependenciesBuilder;
-use crate::stage::dependency_include_fetcher::DependencyIncludeFetcher;
-use crate::stage::dependency_source_fetcher::DependencySourceFetcher;
+use crate::tool::configuration_parser::ConfigurationParser;
+use crate::tool::dependencies_compiler::DependenciesCompiler;
+use crate::tool::dependency_include_fetcher::DependencyIncludeFetcher;
+use crate::tool::dependency_source_fetcher::DependencySourceFetcher;
 
 pub fn build(build_args: BuildArgs) -> Result<()> {
     let project_path = build_args.path.clone();
@@ -41,8 +41,8 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     
 
     /** Dependency building */
-    DependenciesBuilder::new(toolchain, profile, &dependencies)
-        .build(
+    DependenciesCompiler::new(toolchain, profile, &dependencies)
+        .compile(
             &dependency_path.include,
             &target_path.build_mode.toolchain.cache.dependency
         )

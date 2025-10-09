@@ -1,26 +1,26 @@
 use std::fs;
 use anyhow::Result;
 use std::path::PathBuf;
-use crate::stage::dependency_source_fetcher::fetch_dependency::FetchedDependency;
+use crate::tool::dependency_source_fetcher::Artifact;
 
 /**
     Converts a dependency tree into a flat dependency list.
  */
 pub struct DependencyIncludeFetcher<'a> {
-    dependencies: &'a [FetchedDependency]
+    artifacts: &'a [Artifact]
 }
 
 impl<'a> DependencyIncludeFetcher<'a> {
-    pub fn new(dependencies: &'a [FetchedDependency]) -> Self {
+    pub fn new(artifacts: &'a [Artifact]) -> Self {
         Self {
-            dependencies,
+            artifacts,
         }
     }
 
     /* Fetch dependencies header files */
     pub fn fetch(&self, include_dir: &PathBuf) -> Result<()> {
-        for dependency in self.dependencies {
-            copy_headers(&dependency.source.join("src"), &include_dir.join(&dependency.dependency.name))?;
+        for artifact in self.artifacts {
+            copy_headers(&artifact.source.join("src"), &include_dir.join(&artifact.dependency.name))?;
         }
 
         Ok(())

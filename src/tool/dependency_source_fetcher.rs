@@ -1,11 +1,17 @@
-pub mod fetch_dependency;
+mod fs_repository;
+mod git_repository;
 
 use crate::config::{Config, Dependency, Registry};
-use crate::stage::dependency_source_fetcher::fetch_dependency::{fetch_dependency, FetchedDependency};
 use anyhow::{Context, Result};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+
+
+pub struct Artifact {
+    pub source: PathBuf,
+    pub dependency: Dependency,
+}
 
 /**
     Converts a dependency tree into a flat dependency list.
@@ -24,8 +30,8 @@ impl DependencySourceFetcher {
     }
 
     /* Fetch dependencies recursively and return a flat vector */
-    pub fn fetch(&self, sources_dir: &PathBuf) -> Result<Vec<FetchedDependency>> {
-        let mut fetched_dependencies = vec![];
+    pub fn fetch(&self, sources_dir: &PathBuf) -> Result<Vec<Artifact>> {
+        let mut artifacts = vec![];
 
         for dependency in &self.dependencies {
             /* todo: check if dependency is already fetched */
@@ -35,8 +41,8 @@ impl DependencySourceFetcher {
 
             fetch_dependency(registry, dependency, sources_dir)?;
 
-            fetched_dependencies.push(
-                FetchedDependency {
+            artifacts.push(
+                Artifact {
                     source: sources_dir.join(&dependency.name),
                     dependency: dependency.clone()
                 }
@@ -49,13 +55,35 @@ impl DependencySourceFetcher {
             let config: Config = serde_yaml::from_str(&config_str)
                 .with_context(|| format!("Failed to parse build.yaml for dependency {}", dependency.name))?;
 
-            let fetched_child_dependencies = DependencySourceFetcher::new(config.registries, config.dependencies)
+            let children_artifacts = DependencySourceFetcher::new(config.registries, config.dependencies)
                 .fetch(sources_dir)
                 .with_context(|| format!("Failed to fetch dependencies for dependency {}", dependency.name))?;
 
-            fetched_dependencies.extend(fetched_child_dependencies);
+            artifacts.extend(children_artifacts);
         }
 
-        Ok(fetched_dependencies)
+        Ok(artifacts)
+    }
+}
+
+fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_directory: &PathBuf) -> anyhow::Result<()> {
+    match registry {
+        Registry::Git { url, branch } => {
+            log::info!("Fetching dependency '{}' from 'git' repository {}", dependency.name, url);
+            git_repository::fetch_git_dependency(
+                url,
+                branch,
+                dependency,
+                sources_directory
+            ).with_context(|| format!("Failed to fetch dependency '{}' from 'git' repository {}", dependency.name, url))
+        },
+        Registry::FileSystem(repository_path) => {
+            log::info!("Fetching dependency '{}' from 'fs' repository {:?}", dependency.name, repository_path);
+            fs_repository::fetch_fs_dependency(
+                repository_path.as_ref(),
+                dependency,
+                sources_directory
+            ).with_context(|| format!("Failed to fetch dependency '{}' from 'fs' repository {}", dependency.name, repository_path))
+        }
     }
 }
