@@ -34,12 +34,19 @@ impl DependencySourceFetcher {
         let mut artifacts = vec![];
 
         for dependency in &self.dependencies {
-            /* todo: check if dependency is already fetched */
+            let artifact_path = sources_dir.join(&dependency.name);
+            let dependency_fetched = fs::exists(&artifact_path)
+                .with_context(|| format!("Failed to check if dependency '{}' is fetched", dependency.name))?;
+
+            if dependency_fetched {
+                log::info!("Skipping already fetched dependency '{}'", dependency.name);
+                continue;
+            }
 
             let registry = self.registries.get(&dependency.registry_name)
                 .ok_or_else(|| anyhow::anyhow!("Repository '{}' not found", &dependency.registry_name))?;
 
-            fetch_dependency(registry, dependency, sources_dir)?;
+            fetch_dependency(registry, dependency, &artifact_path)?;
 
             artifacts.push(
                 Artifact {
@@ -66,7 +73,7 @@ impl DependencySourceFetcher {
     }
 }
 
-fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_directory: &PathBuf) -> Result<()> {
+fn fetch_dependency(registry: &Registry, dependency: &Dependency, artifact_path: &PathBuf) -> Result<()> {
     match registry {
         Registry::Git { url, branch } => {
             log::info!("Fetching dependency '{}' from 'git' repository {}", dependency.name, url);
@@ -74,7 +81,7 @@ fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_direct
                 url,
                 branch,
                 dependency,
-                sources_directory
+                artifact_path
             ).with_context(|| format!("Failed to fetch dependency '{}' from 'git' repository {}", dependency.name, url))
         },
         Registry::FileSystem(repository_path) => {
@@ -82,7 +89,7 @@ fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_direct
             fs_registry::fetch_fs_dependency(
                 repository_path.as_ref(),
                 dependency,
-                sources_directory
+                artifact_path
             ).with_context(|| format!("Failed to fetch dependency '{}' from 'fs' repository {}", dependency.name, repository_path))
         }
     }

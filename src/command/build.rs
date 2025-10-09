@@ -84,6 +84,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     linker.link(&config.project.link_strategy, &object_files, &target_path.build_mode.toolchain.output, &config.project.name)
         .context("Failed to link project")?;
 
+    log::info!("BUILD SUCCESSFUL");
     Ok(())
 }
 

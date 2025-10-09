@@ -20,11 +20,11 @@ fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> 
 pub fn fetch_fs_dependency(
     repository_path: &Path,
     dependency: &Dependency,
-    source_directory: &Path
+    artifact_path: &Path
 ) -> Result<()> {
     let dependency_path = repository_path.join(&dependency.name);
 
-    copy_dir_all(dependency_path, source_directory.join(&dependency.name))?;
+    copy_dir_all(dependency_path, artifact_path)?;
 
     Ok(())
 }
