@@ -1,5 +1,5 @@
-mod fs_repository;
-mod git_repository;
+mod fs_registry;
+mod git_registry;
 
 use crate::config::{Config, Dependency, Registry};
 use anyhow::{Context, Result};
@@ -9,7 +9,7 @@ use std::path::PathBuf;
 
 
 pub struct Artifact {
-    pub source: PathBuf,
+    pub path: PathBuf,
     pub dependency: Dependency,
 }
 
@@ -43,7 +43,7 @@ impl DependencySourceFetcher {
 
             artifacts.push(
                 Artifact {
-                    source: sources_dir.join(&dependency.name),
+                    path: sources_dir.join(&dependency.name),
                     dependency: dependency.clone()
                 }
             );
@@ -70,7 +70,7 @@ fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_direct
     match registry {
         Registry::Git { url, branch } => {
             log::info!("Fetching dependency '{}' from 'git' repository {}", dependency.name, url);
-            git_repository::fetch_git_dependency(
+            git_registry::fetch_git_dependency(
                 url,
                 branch,
                 dependency,
@@ -79,7 +79,7 @@ fn fetch_dependency(registry: &Registry, dependency: &Dependency, sources_direct
         },
         Registry::FileSystem(repository_path) => {
             log::info!("Fetching dependency '{}' from 'fs' repository {:?}", dependency.name, repository_path);
-            fs_repository::fetch_fs_dependency(
+            fs_registry::fetch_fs_dependency(
                 repository_path.as_ref(),
                 dependency,
                 sources_directory

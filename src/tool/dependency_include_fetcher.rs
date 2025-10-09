@@ -20,7 +20,7 @@ impl<'a> DependencyIncludeFetcher<'a> {
     /* Fetch dependencies header files */
     pub fn fetch(&self, include_dir: &PathBuf) -> Result<()> {
         for artifact in self.artifacts {
-            copy_headers(&artifact.source.join("src"), &include_dir.join(&artifact.dependency.name))?;
+            copy_headers(&artifact.path.join("src"), &include_dir.join(&artifact.dependency.name))?;
         }
 
         Ok(())

@@ -1,15 +1,17 @@
 pub mod target_path;
 pub mod dependency_path;
 
+use std::fs;
 use anyhow::{Context, Result};
 use crate::cli::{BuildArgs, BuildModeCli};
 use crate::command::build::dependency_path::DependencyPath;
 use crate::command::build::target_path::TargetPath;
-use crate::config::{Config, OptimizationLevel, Profile};
+use crate::config::{Config, LinkStrategy, OptimizationLevel, Profile, ProjectType};
+use crate::tool::compiler::Compiler;
 use crate::tool::configuration_parser::ConfigurationParser;
-use crate::tool::dependencies_compiler::DependenciesCompiler;
 use crate::tool::dependency_include_fetcher::DependencyIncludeFetcher;
 use crate::tool::dependency_source_fetcher::DependencySourceFetcher;
+use crate::tool::files_fetcher::fetch_files;
 
 pub fn build(build_args: BuildArgs) -> Result<()> {
     let project_path = build_args.path.clone();
@@ -31,22 +33,45 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     let target_path = TargetPath::create(&project_path, &build_mode.to_string(), &toolchain_name)?;
 
     /** Dependency fetching */
-    let dependencies = DependencySourceFetcher::new(config.registries, config.dependencies, )
+    let artifacts = DependencySourceFetcher::new(config.registries, config.dependencies, )
         .fetch(&dependency_path.source)
         .context("Failed to fetch dependency sources")?;
 
-    DependencyIncludeFetcher::new(&dependencies)
+    DependencyIncludeFetcher::new(&artifacts)
         .fetch(&dependency_path.include)
         .context("Failed to fetch dependency headers")?;
-    
 
-    /** Dependency building */
-    DependenciesCompiler::new(toolchain, profile, &dependencies)
-        .compile(
-            &dependency_path.include,
-            &target_path.build_mode.toolchain.cache.dependency
-        )
-        .context("Failed to build dependencies")?;
+    /** Compilation */
+    let compiler = Compiler::new(profile, toolchain.clone(), dependency_path.include.clone());
+
+    /* compile dependencies artifacts */
+    for artifact in &artifacts {
+        let target_path = target_path.build_mode.toolchain.cache.dependency.join(&artifact.dependency.name);
+        fs::create_dir_all(&target_path)
+            .with_context(|| format!("Failed to create directory {:?}", &target_path))?;
+
+        let source_files = fetch_files(&artifact.path, "c")
+            .with_context(|| format!("Failed to fetch source files for dependency {}", &artifact.dependency.name))?;
+
+        /* generate position-independent code if the dependency is dynamically linked */
+        let pic = matches!(artifact.dependency.link_strategy, LinkStrategy::Dynamically);
+
+        compiler.compile(&source_files, &target_path, pic)
+            .with_context(|| format!("Failed to compile dependency '{}' artifact", &artifact.dependency.name))?;
+    }
+
+    /* compile project sources */
+    let source_files = fetch_files(&project_path, "c")
+        .context("Failed to fetch source files for project")?;
+
+    let target_path = target_path.build_mode.toolchain.cache.project;
+    /* generate position-independent code if the project is a dynamic library */
+    let pic = matches!(config.project.project_type, ProjectType::DynamicLibrary);
+
+    compiler.compile(&source_files, &target_path, pic)
+        .context("Failed to compile project files")?;
+
+    /** Linking */
 
     Ok(())
 }
@@ -65,63 +90,3 @@ fn fetch_profile(config: &Config, build_mode: &BuildModeCli,) -> Profile {
         }
     }
 }
-
-
-// pub fn build(build_args: BuildArgs) -> Result<()> {
-//     log::info!("Building project in directory {:?}", build_args.path);
-//
-//     let config_str: String = fs::read_to_string(build_args.path.join("build.yaml"))
-//         .context("Failed to read 'build.yaml' file")?;
-//
-//     let mut config: Config = serde_yaml::from_str(&config_str)
-//         .context("Failed to parse 'build.yaml' file")?;
-//
-//     fs::create_dir_all(build_args.path.join("dependency"))
-//         .context("Failed to create 'dependency' directory")?;
-//
-//     let (toolchain_name, toolchain) = config.toolchain(build_args.toolchain.clone())
-//         .context("Failed to find toolchain in build.yaml file")?;
-//
-//     let project_dir: PathBuf = build_args.path.clone();
-//     let build_mode: BuildModeCli = build_args.build_mode();
-//
-//     log::info!("Fetching dependencies...");
-//     dependency_manager::fetch_dependencies(
-//         &config.repositories,
-//         &config.dependencies,
-//         &build_args.path.join("dependency")
-//     ).context("Failed to fetch dependencies")?;
-//
-//     let manifests: Vec<Manifest> = get_dependency_manifests(&project_dir, &config.dependencies);
-//
-//     let profile = match build_mode {
-//         BuildModeCli::Development => {
-//             config.profiles.unwrap_or_default().development.unwrap_or_else(|| Profile {
-//                 optimization_level: OptimizationLevel::O
-//             })
-//         }
-//         BuildModeCli::Release => {
-//             config.profiles.unwrap_or_default().release.unwrap_or_else(|| Profile {
-//                 optimization_level: OptimizationLevel::Ofast
-//             })
-//         }
-//     };
-//
-//     Compiler::new(
-//         project_dir.clone(),
-//         project_dir.join("dependency").join("header").clone(),
-//         project_dir.join("target").join(toolchain_name).clone(),
-//
-//         config.project.name,
-//         config.project.project_type,
-//
-//         manifests,
-//
-//         toolchain
-//     ).compile(
-//         &build_mode,
-//         &profile
-//     );
-//
-//     Ok(())
-// }

@@ -8,7 +8,7 @@ pub trait ExecuteCommand {
 impl ExecuteCommand for Command {
     fn execute(&mut self, log: bool) -> Result<String> {
         if log {
-            log::info!("{}", self.cli_str());
+            log::trace!("{}", self.cli_str());
         }
 
         match self.output() {
@@ -16,7 +16,7 @@ impl ExecuteCommand for Command {
                 if output.status.success() {
                     let std_out: String = String::from_utf8_lossy(&output.stdout).to_string();
 
-                    log::info!("{std_out}");
+                    log::trace!("{std_out}");
 
                     Ok(std_out)
                 } else {
