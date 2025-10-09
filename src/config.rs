@@ -4,13 +4,10 @@ use std::collections::HashMap;
 use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
-pub enum ProjectType {
+pub enum LinkStrategy {
     #[default]
-    #[serde(rename = "executable")]
     Executable,
-    #[serde(rename = "static-library")]
     StaticLibrary,
-    #[serde(rename = "dynamic-library")]
     DynamicLibrary,
 }
 
@@ -19,7 +16,7 @@ pub struct Project {
     pub name: String,
     pub version: String,
     pub description: Option<String>,
-    pub project_type: ProjectType,
+    pub link_strategy: LinkStrategy,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

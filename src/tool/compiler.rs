@@ -48,24 +48,30 @@ impl Compiler {
 
     /**
         @param: source_files - list of source files
-        @param: target_path - output directory
+        @param: output_path - output directory path
         @param: pic - position independent code
+
+        @return: list of compiled object files
     */
-    pub fn compile(&self, source_files: &[PathBuf], target_path: &PathBuf, pic: bool) -> Result<()> {
+    pub fn compile(&self, source_files: &[PathBuf], output_path: &PathBuf, pic: bool) -> Result<Vec<PathBuf>> {
+        let mut object_files = vec![];
+
         for source_file in source_files {
             let output_stem = hash(source_file)
                 .with_context(|| format!("Failed to hash source file {:?}", source_file))?;
 
             let output_name = Extension::Object.file_name(&output_stem, &self.toolchain.compiler);
 
-            let output_file = target_path.join(output_name);
+            let output_file = output_path.join(output_name);
+
+            object_files.push(output_file.clone());
 
             let file_exists = fs::exists(&output_file).with_context(|| format!("Failed to check if file exists {:?}", output_file))?;
             if file_exists {
                 log::info!("Skipping already compiled file {:?}", source_file);
                 continue;
             }
-            log::info!("Compiling {:?} into {}", source_file, target_path.display());
+            log::info!("Compiling {:?} into {}", source_file, output_path.display());
 
             let mut command = Command::new(&self.toolchain.compiler);
 
@@ -89,12 +95,12 @@ impl Compiler {
 
             command
                 .arg("-o")
-                .arg(output_file);
+                .arg(&output_file);
 
             command.execute(true)
                 .with_context(|| format!("Failed to compile file {:?}", source_file))?;
         }
 
-        Ok(())
+        Ok(object_files)
     }
 }
