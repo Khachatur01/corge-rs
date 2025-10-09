@@ -1,18 +1,18 @@
 pub mod target_path;
 pub mod dependency_path;
 
-use std::fs;
-use anyhow::{Context, Result};
 use crate::cli::{BuildArgs, BuildModeCli};
 use crate::command::build::dependency_path::DependencyPath;
 use crate::command::build::target_path::TargetPath;
-use crate::config::{Config, OptimizationLevel, Profile, LinkStrategy};
+use crate::config::{Config, LinkStrategy, OptimizationLevel, Profile};
 use crate::tool::compiler::Compiler;
 use crate::tool::configuration_parser::ConfigurationParser;
 use crate::tool::dependency_include_fetcher::DependencyIncludeFetcher;
 use crate::tool::dependency_source_fetcher::DependencySourceFetcher;
 use crate::tool::files_fetcher::fetch_files;
 use crate::tool::linker::Linker;
+use anyhow::{Context, Result};
+use std::fs;
 
 pub fn build(build_args: BuildArgs) -> Result<()> {
     let project_path = build_args.path.clone();

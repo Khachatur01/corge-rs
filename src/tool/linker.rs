@@ -1,9 +1,9 @@
-use std::path::PathBuf;
-use std::process::Command;
-use anyhow::Result;
 use crate::config::{LinkStrategy, Toolchain};
 use crate::extension_manager::Extension;
 use crate::std_command_ext::ExecuteCommand;
+use anyhow::Result;
+use std::path::PathBuf;
+use std::process::Command;
 
 pub struct Linker {
     toolchain: Toolchain,

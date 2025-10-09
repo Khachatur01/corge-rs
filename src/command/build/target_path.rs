@@ -1,6 +1,6 @@
+use anyhow::Context;
 use std::fs;
 use std::path::PathBuf;
-use anyhow::Context;
 
 pub struct TargetCachePath {
     pub project: PathBuf,

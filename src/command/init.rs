@@ -1,17 +1,70 @@
 use crate::cli::InitArgs;
+use anyhow::{Context, Result};
 use std::fs;
 
-pub fn init(init_args: InitArgs) {
-    println!("Initializing project in directory {:?}", init_args.path);
-    if fs::exists(&init_args.path).unwrap() {
-        panic!("Directory {:?} already exists", init_args.path);
+const MAIN_C_CONTENT: &str = r###"
+int main() {
+    return 0;
+}
+"###;
+
+const GITIGNORE_CONTENT: &str = r###"
+/target
+/dependency
+"###;
+
+const BUILD_YAML_CONTENT: &str = r###"
+project:
+  name: {{name}}
+  version: 1.0.0
+  link_strategy: {{link_strategy}}
+
+profiles:
+  release:
+    optimization_level: O
+  development:
+    optimization_level: None
+"###;
+
+pub fn init(init_args: InitArgs) -> Result<()> {
+    let project_name = init_args.path.file_name().unwrap().to_str().unwrap();
+
+    log::info!("Initializing project in directory {:?}", init_args.path);
+
+    let directory_exists = fs::exists(&init_args.path)
+        .with_context(|| format!("Failed to check if directory {:?} exists", init_args.path))?;
+
+    if directory_exists {
+        let read_dir = fs::read_dir(&init_args.path)
+            .with_context(|| format!("Failed to read directory {:?}", &init_args.path))?;
+
+        if read_dir.count() > 0 {
+            return Err(anyhow::anyhow!("Directory {:?} is not empty", &init_args.path));
+        }
     }
 
-    /* todo */
-    fs::create_dir_all(&init_args.path).unwrap();
+    let src_dir = init_args.path.join("src");
+    fs::create_dir_all(&src_dir)
+        .with_context(|| format!("Failed to create directory {:?}", &src_dir))?;
 
-    fs::create_dir_all(init_args.path.join("../..")).unwrap();
-    fs::write(init_args.path.join("../..").join("main.c"), "").unwrap();
-    fs::write(init_args.path.join("../../../.gitignore"), "").unwrap();
-    fs::write(init_args.path.join("build.yaml"), "").unwrap();
+    let main_c_content = MAIN_C_CONTENT.trim_start();
+    fs::write(&src_dir.join("main.c"), main_c_content)
+        .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
+
+    let gitignore_content = GITIGNORE_CONTENT.trim_start();
+    fs::write(&init_args.path.join(".gitignore"), gitignore_content)
+        .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
+
+    let link_strategy = init_args.link_strategy().to_yaml_tag();
+
+    let build_yaml_content = BUILD_YAML_CONTENT
+        .trim_start()
+        .replace("{{name}}", project_name)
+        .replace("{{link_strategy}}", &link_strategy);
+
+    fs::write(init_args.path.join("build.yaml"), build_yaml_content)
+        .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
+
+    log::info!("PROJECT SUCCESSFULLY INITIALIZED ({})", link_strategy);
+    Ok(())
 }

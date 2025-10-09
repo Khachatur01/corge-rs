@@ -1,15 +1,7 @@
+use crate::config::LinkStrategy;
 use clap::{Parser, Subcommand};
 use std::fmt::Display;
 use std::path::PathBuf;
-
-#[derive(Clone, Debug, Default)]
-pub enum ProjectTypeCli {
-    #[default]
-    Executable,
-    StaticLibrary,
-    DynamicLibrary,
-}
-
 
 #[derive(Clone, Debug, Default)]
 pub enum BuildModeCli {
@@ -33,24 +25,25 @@ pub struct InitArgs {
     pub path: PathBuf,
 
     /// Initializes the project as an executable (binary).
-    #[arg(long, group = "project_type")]
+    #[arg(long, group = "link_strategy")]
     pub executable: bool,
 
     /// Initializes the project as a static library.
-    #[arg(long, group = "project_type")]
+    #[arg(long, group = "link_strategy")]
     pub s_lib: bool,
 
     /// Initializes the project as a dynamic library.
-    #[arg(long, group = "project_type")]
+    #[arg(long, group = "link_strategy")]
     pub d_lib: bool,
 }
-impl Into<ProjectTypeCli> for InitArgs {
-    fn into(self) -> ProjectTypeCli {
+
+impl InitArgs {
+    pub fn link_strategy(&self) -> LinkStrategy {
         match (self.executable, self.s_lib, self.d_lib) {
-            (true, false, false) => ProjectTypeCli::Executable,
-            (false, true, false) => ProjectTypeCli::StaticLibrary,
-            (false, false, true) => ProjectTypeCli::DynamicLibrary,
-            _ => ProjectTypeCli::Executable
+            (true, false, false) => LinkStrategy::Executable,
+            (false, true, false) => LinkStrategy::StaticLibrary,
+            (false, false, true) => LinkStrategy::DynamicLibrary,
+            _ => LinkStrategy::Executable
         }
     }
 }
@@ -97,7 +90,7 @@ impl BuildArgs {
 pub enum CommandCli {
     /// Initializes a new project.
     Init(InitArgs),
-    /// Cleans the project build directory and optionally dependencies directory too.
+    /// Cleans the project build directory and optionally dependencies directory.
     Clean(CleanArgs),
     /// Builds the project.
     Build(BuildArgs),

@@ -1,5 +1,3 @@
 /target
 Cargo.lock
-example_app
-lib1
-lib2
+/projects

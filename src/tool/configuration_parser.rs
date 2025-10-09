@@ -1,7 +1,7 @@
-use std::fs;
-use anyhow::{Context, Result};
-use std::path::PathBuf;
 use crate::config::Config;
+use anyhow::{Context, Result};
+use std::fs;
+use std::path::PathBuf;
 
 pub struct ConfigurationParser {
     project_directory: PathBuf,

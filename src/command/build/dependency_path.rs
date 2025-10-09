@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use anyhow::{Context, Result};
+use std::path::PathBuf;
 
 pub struct DependencyPath {
     pub source: PathBuf,

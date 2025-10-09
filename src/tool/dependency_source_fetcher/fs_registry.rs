@@ -1,7 +1,7 @@
 use crate::config::Dependency;
+use anyhow::Result;
 use std::path::Path;
 use std::{fs, io};
-use anyhow::{Context, Result};
 
 fn copy_dir_all(src: impl AsRef<Path>, dst: impl AsRef<Path>) -> io::Result<()> {
     fs::create_dir_all(&dst)?;

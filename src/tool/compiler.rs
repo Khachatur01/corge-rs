@@ -1,13 +1,13 @@
+use crate::config::{Profile, Toolchain};
+use crate::extension_manager::Extension;
+use crate::std_command_ext::ExecuteCommand;
+use anyhow::{Context, Result};
+use sha2::{Digest, Sha256};
 use std::fmt::Debug;
 use std::fs;
 use std::hash::Hash;
-use crate::config::{Profile, Toolchain};
-use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
-use sha2::{Digest, Sha256};
-use crate::extension_manager::Extension;
-use crate::std_command_ext::ExecuteCommand;
 
 fn hash<P: AsRef<Path> + Hash + Debug>(path: P) -> Result<String> {
     let source_file_name = path

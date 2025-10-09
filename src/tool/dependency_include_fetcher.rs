@@ -1,7 +1,7 @@
-use std::fs;
-use anyhow::Result;
-use std::path::PathBuf;
 use crate::tool::dependency_source_fetcher::Artifact;
+use anyhow::Result;
+use std::fs;
+use std::path::PathBuf;
 
 /**
     Converts a dependency tree into a flat dependency list.

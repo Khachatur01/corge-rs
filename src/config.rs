@@ -1,7 +1,7 @@
+use anyhow::Result;
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use anyhow::Result;
 
 #[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
 pub enum LinkStrategy {
@@ -11,11 +11,20 @@ pub enum LinkStrategy {
     DynamicLibrary,
 }
 
+impl LinkStrategy {
+    pub fn to_yaml_tag(&self) -> String {
+        match self {
+            LinkStrategy::Executable => "!Executable".to_string(),
+            LinkStrategy::StaticLibrary => "!StaticLibrary".to_string(),
+            LinkStrategy::DynamicLibrary => "!DynamicLibrary".to_string(),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Default)]
 pub struct Project {
     pub name: String,
     pub version: String,
-    pub description: Option<String>,
     pub link_strategy: LinkStrategy,
 }
 

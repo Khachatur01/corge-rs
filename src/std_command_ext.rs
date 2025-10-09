@@ -1,5 +1,5 @@
-use std::process::Command;
 use anyhow::Result;
+use std::process::Command;
 
 pub trait ExecuteCommand {
     fn execute(&mut self, log: bool) -> Result<String>;
