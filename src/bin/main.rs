@@ -1,12 +1,6 @@
-use crate::cli::{CommandCli, CompilationDatabaseArgs};
 use clap::Parser;
-
-mod config;
-mod cli;
-mod std_command_ext;
-mod tool;
-mod command;
-mod extension_manager;
+use lib::{cli, command};
+use lib::cli::{CommandCli, CompilationDatabaseArgs};
 
 fn main() {
     simple_logger::SimpleLogger::new().env().init().unwrap();
