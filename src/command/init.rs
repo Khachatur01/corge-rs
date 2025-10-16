@@ -50,9 +50,11 @@ pub fn init(init_args: InitArgs) -> Result<()> {
     fs::create_dir_all(&src_dir)
         .with_context(|| format!("Failed to create directory {:?}", &src_dir))?;
 
-    let main_c_content = MAIN_C_CONTENT.trim_start();
-    fs::write(&src_dir.join("main.c"), main_c_content)
-        .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
+    if init_args.executable {
+        let main_c_content = MAIN_C_CONTENT.trim_start();
+        fs::write(&src_dir.join("main.c"), main_c_content)
+            .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
+    }
 
     let link_strategy = init_args.link_strategy().to_yaml_tag();
 
