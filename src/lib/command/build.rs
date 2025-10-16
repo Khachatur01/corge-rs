@@ -13,8 +13,9 @@ use crate::tool::files_fetcher::fetch_files;
 use crate::tool::linker::Linker;
 use anyhow::{Context, Result};
 use std::fs;
+use std::path::PathBuf;
 
-pub fn build(build_args: BuildArgs) -> Result<()> {
+pub fn build(build_args: BuildArgs) -> Result<PathBuf> {
     let project_path = build_args.path.clone();
 
     log::info!("Building project in directory {:?}", &project_path);
@@ -27,7 +28,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
 
     let build_mode = build_args.build_mode();
     let profile = fetch_profile(&config, &build_mode);
-    let (toolchain_name, toolchain) = config.toolchain(build_args.subcommand)
+    let (toolchain_name, toolchain) = config.toolchain(build_args.toolchain)
         .context("Failed to find toolchain in build.yaml file")?;
 
     /* Path definition */
@@ -49,7 +50,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     let compiler = Compiler::new(profile, toolchain.clone(), dependency_path.include.clone());
 
     /* generate position-independent code if the project is a dynamic library */
-    let pic = matches!(config.project.link_strategy, LinkStrategy::DynamicLibrary);
+    let pic = matches!(build_args.link, LinkStrategy::DynamicLibrary);
 
     let mut object_files = vec![];
 
@@ -59,7 +60,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
         fs::create_dir_all(&target_path)
             .with_context(|| format!("Failed to create directory {:?}", &target_path))?;
 
-        let source_files = fetch_files(&artifact.path, "c")
+        let source_files = fetch_files(&artifact.path.join("src"), "c")
             .with_context(|| format!("Failed to fetch source files for dependency {}", &artifact.dependency.name))?;
 
         let artifact_object_files = compiler
@@ -70,7 +71,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     }
 
     /* compile project sources */
-    let source_files = fetch_files(&project_path, "c")
+    let source_files = fetch_files(&project_path.join("src"), "c")
         .context("Failed to fetch source files for project")?;
 
     let project_object_files = compiler
@@ -81,11 +82,11 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
     /** Linking */
     log::info!("Linking project");
     let linker = Linker::new(toolchain);
-    linker.link(&config.project.link_strategy, &object_files, &target_path.build_mode.toolchain.output, &config.project.name)
+    let output_file_path = linker.link(&build_args.link, &object_files, &target_path.build_mode.toolchain.output, &config.project.name)
         .context("Failed to link project")?;
 
     log::info!("BUILD SUCCESSFUL");
-    Ok(())
+    Ok(output_file_path)
 }
 
 fn fetch_profile(config: &Config, build_mode: &BuildModeCli,) -> Profile {

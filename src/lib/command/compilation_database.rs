@@ -25,7 +25,7 @@ pub fn compilation_database(compilation_database_args: CompilationDatabaseArgs) 
     let compilation_database_path = CompilationDatabasePath::create(&project_path)?;
 
     // Collect project source files
-    let source_files_paths = fetch_files(&project_path, "c").context("Failed to fetch source files for project")?;
+    let source_files_paths = fetch_files(&project_path.join("src"), "c").context("Failed to fetch source files for project")?;
 
     let project_path = fs::canonicalize(project_path)?;
     let include_path = fs::canonicalize(dependency_path.include)?;

@@ -2,9 +2,8 @@ use crate::config::LinkStrategy;
 use clap::{Parser, Subcommand};
 use std::fmt::Display;
 use std::path::PathBuf;
-use log::kv::Source;
 
-#[derive(Clone, Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub enum BuildModeCli {
     #[default]
     Development,
@@ -20,40 +19,17 @@ impl Display for BuildModeCli {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct InitArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
-
-    /// Initializes the project as an executable (binary).
-    #[arg(long, group = "link_strategy")]
-    pub executable: bool,
-
-    /// Initializes the project as a static library.
-    #[arg(long, group = "link_strategy")]
-    pub s_lib: bool,
-
-    /// Initializes the project as a dynamic library.
-    #[arg(long, group = "link_strategy")]
-    pub d_lib: bool,
 
     /// Initializes the project without a git repository.
     #[arg(long, default_value = "false", value_name = "NO_GIT")]
     pub no_git: bool,
 }
 
-impl InitArgs {
-    pub fn link_strategy(&self) -> LinkStrategy {
-        match (self.executable, self.s_lib, self.d_lib) {
-            (true, false, false) => LinkStrategy::Executable,
-            (false, true, false) => LinkStrategy::StaticLibrary,
-            (false, false, true) => LinkStrategy::DynamicLibrary,
-            _ => LinkStrategy::Executable
-        }
-    }
-}
-
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct CleanArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
@@ -63,7 +39,7 @@ pub struct CleanArgs {
     pub deps_too: bool,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum CloneSource {
     Git {
         #[arg(value_name = "URL")]
@@ -77,7 +53,7 @@ pub enum CloneSource {
     },
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct CloneArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
@@ -86,13 +62,13 @@ pub struct CloneArgs {
     pub source: CloneSource,
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct CompilationDatabaseArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
 }
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum BuildToolchain {
     /// Selects the default toolchain.
     Default,
@@ -114,13 +90,17 @@ pub enum BuildToolchain {
     }
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 pub struct BuildArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
 
     #[command(subcommand)]
-    pub subcommand: Option<BuildToolchain>,
+    pub toolchain: Option<BuildToolchain>,
+
+    /// Specifies the link strategy.
+    #[arg(long, value_enum, default_value = "executable", value_name = "LINK_STRATEGY",)]
+    pub link: LinkStrategy,
 
     /// Builds the project in release mode (optimized).
     #[arg(long, group = "build_mode")]
@@ -141,7 +121,7 @@ impl BuildArgs {
 }
 
 
-#[derive(Subcommand, Debug)]
+#[derive(Subcommand, Debug, Clone)]
 pub enum CommandCli {
     /// Clone a project
     Clone(CloneArgs),
@@ -157,7 +137,7 @@ pub enum CommandCli {
     Compdb(CompilationDatabaseArgs),
 }
 
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(version, about, long_about = None)]
 pub struct CLI {
     #[command(subcommand)]

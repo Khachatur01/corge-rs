@@ -1,10 +1,10 @@
 use anyhow::Result;
-use clap::Subcommand;
+use clap::ValueEnum;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use crate::cli::BuildToolchain;
 
-#[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
+#[derive(Serialize, Deserialize, ValueEnum, Debug, Default, Clone)]
 pub enum LinkStrategy {
     #[default]
     Executable,
@@ -26,7 +26,6 @@ impl LinkStrategy {
 pub struct Project {
     pub name: String,
     pub version: String,
-    pub link_strategy: LinkStrategy,
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]

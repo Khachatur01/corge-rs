@@ -27,7 +27,5 @@ fn fetch_files_by_extension(path: &PathBuf, extension: &str) -> anyhow::Result<V
 }
 
 pub fn fetch_files(path: &PathBuf, extension: &str) -> anyhow::Result<Vec<PathBuf>> {
-    let src_path = path.join("src");
-
-    fetch_files_by_extension(&src_path, extension)
+    fetch_files_by_extension(&path, extension)
 }

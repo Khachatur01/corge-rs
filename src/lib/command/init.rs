@@ -23,7 +23,6 @@ const BUILD_YAML_CONTENT: &str = r###"
 project:
   name: {{name}}
   version: 1.0.0
-  link_strategy: {{link_strategy}}
 
 profiles:
   release:
@@ -53,18 +52,13 @@ pub fn init(init_args: InitArgs) -> Result<()> {
     fs::create_dir_all(&src_dir)
         .with_context(|| format!("Failed to create directory {:?}", &src_dir))?;
 
-    if init_args.executable {
-        let main_c_content = MAIN_C_CONTENT.trim_start();
-        fs::write(&src_dir.join("main.c"), main_c_content)
-            .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
-    }
-
-    let link_strategy = init_args.link_strategy().to_yaml_tag();
+    let main_c_content = MAIN_C_CONTENT.trim_start();
+    fs::write(&src_dir.join("main.c"), main_c_content)
+        .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
 
     let build_yaml_content = BUILD_YAML_CONTENT
         .trim_start()
-        .replace("{{name}}", project_name)
-        .replace("{{link_strategy}}", &link_strategy);
+        .replace("{{name}}", project_name);
 
     fs::write(init_args.path.join("build.yaml"), build_yaml_content)
         .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
@@ -81,6 +75,6 @@ pub fn init(init_args: InitArgs) -> Result<()> {
             .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
     }
 
-    log::info!("PROJECT SUCCESSFULLY INITIALIZED ({})", link_strategy);
+    log::info!("PROJECT SUCCESSFULLY INITIALIZED");
     Ok(())
 }
