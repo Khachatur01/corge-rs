@@ -11,9 +11,12 @@ int main() {
 "###;
 
 const GITIGNORE_CONTENT: &str = r###"
-/target
-/dependency
-/compilation_database
+.idea/
+.vscode/
+target/
+dependency/
+compilation_database/
+.env
 "###;
 
 const BUILD_YAML_CONTENT: &str = r###"
