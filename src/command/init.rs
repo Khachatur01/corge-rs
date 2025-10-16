@@ -1,6 +1,8 @@
 use crate::cli::InitArgs;
 use anyhow::{Context, Result};
 use std::fs;
+use std::process::Command;
+use crate::std_command_ext::ExecuteCommand;
 
 const MAIN_C_CONTENT: &str = r###"
 int main() {
@@ -52,10 +54,6 @@ pub fn init(init_args: InitArgs) -> Result<()> {
     fs::write(&src_dir.join("main.c"), main_c_content)
         .with_context(|| format!("Failed to create file {:?}", &src_dir.join("main.c")))?;
 
-    let gitignore_content = GITIGNORE_CONTENT.trim_start();
-    fs::write(&init_args.path.join(".gitignore"), gitignore_content)
-        .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
-
     let link_strategy = init_args.link_strategy().to_yaml_tag();
 
     let build_yaml_content = BUILD_YAML_CONTENT
@@ -65,6 +63,18 @@ pub fn init(init_args: InitArgs) -> Result<()> {
 
     fs::write(init_args.path.join("build.yaml"), build_yaml_content)
         .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
+
+    if !init_args.no_git {
+        Command::new("git")
+            .arg("init")
+            .current_dir(&init_args.path)
+            .execute(true)
+            .with_context(|| format!("Failed to initialize git repository in {:?}", &init_args.path))?;
+
+        let gitignore_content = GITIGNORE_CONTENT.trim_start();
+        fs::write(&init_args.path.join(".gitignore"), gitignore_content)
+            .with_context(|| format!("Failed to create file {:?}", &src_dir))?;
+    }
 
     log::info!("PROJECT SUCCESSFULLY INITIALIZED ({})", link_strategy);
     Ok(())

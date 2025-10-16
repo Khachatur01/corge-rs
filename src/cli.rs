@@ -35,6 +35,10 @@ pub struct InitArgs {
     /// Initializes the project as a dynamic library.
     #[arg(long, group = "link_strategy")]
     pub d_lib: bool,
+
+    /// Initializes the project without a git repository.
+    #[arg(long, default_value = "false", value_name = "NO_GIT")]
+    pub no_git: bool,
 }
 
 impl InitArgs {
