@@ -1,6 +1,6 @@
 use clap::Parser;
-use lib::{cli, command};
-use lib::cli::{CommandCli, CompilationDatabaseArgs};
+use corge::{cli, command};
+use corge::cli::{CommandCli, CompilationDatabaseArgs};
 
 fn main() {
     simple_logger::SimpleLogger::new().env().init().unwrap();
@@ -20,5 +20,6 @@ fn main() {
         CommandCli::Build(build_args) => command::build::build(build_args).unwrap(),
         CommandCli::Run(build_args) => command::run::run(build_args),
         CommandCli::Compdb(compdb_args) => command::compilation_database::compilation_database(compdb_args).unwrap(),
+        CommandCli::Clone(clone_args) => command::clone::clone(clone_args).unwrap(),
     }
 }

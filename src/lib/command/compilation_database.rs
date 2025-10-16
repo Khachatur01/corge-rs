@@ -50,5 +50,6 @@ pub fn compilation_database(compilation_database_args: CompilationDatabaseArgs) 
         Err(err) => bail!("Failed to generate compile commands: {}", err)
     }
 
+    log::info!("COMPILATION DATABASE GENERATED SUCCESSFULLY");
     Ok(())
 }

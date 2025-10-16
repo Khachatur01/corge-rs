@@ -2,6 +2,7 @@ use crate::config::LinkStrategy;
 use clap::{Parser, Subcommand};
 use std::fmt::Display;
 use std::path::PathBuf;
+use log::kv::Source;
 
 #[derive(Clone, Debug, Default)]
 pub enum BuildModeCli {
@@ -62,6 +63,29 @@ pub struct CleanArgs {
     pub deps_too: bool,
 }
 
+#[derive(Subcommand, Debug)]
+pub enum CloneSource {
+    Git {
+        #[arg(value_name = "URL")]
+        url: String,
+        #[arg(long, default_value = "master", value_name = "BRANCH")]
+        branch: String,
+    },
+    FileSystem {
+        #[arg(value_name = "PATH")]
+        from: PathBuf,
+    },
+}
+
+#[derive(Parser, Debug)]
+pub struct CloneArgs {
+    #[arg(default_value = "./", value_name = "PATH")]
+    pub path: PathBuf,
+
+    #[clap(subcommand)]
+    pub source: CloneSource,
+}
+
 #[derive(Parser, Debug)]
 pub struct CompilationDatabaseArgs {
     #[arg(default_value = "./", value_name = "PATH")]
@@ -98,6 +122,8 @@ impl BuildArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum CommandCli {
+    /// Clone a project
+    Clone(CloneArgs),
     /// Initializes a new project.
     Init(InitArgs),
     /// Cleans the project build directory and optionally dependencies directory.

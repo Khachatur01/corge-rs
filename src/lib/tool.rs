@@ -4,3 +4,4 @@ pub mod dependency_include_fetcher;
 pub mod compiler;
 pub mod linker;
 pub mod files_fetcher;
+pub mod dir_copier;
