@@ -27,7 +27,7 @@ pub fn build(build_args: BuildArgs) -> Result<()> {
 
     let build_mode = build_args.build_mode();
     let profile = fetch_profile(&config, &build_mode);
-    let (toolchain_name, toolchain) = config.toolchain(build_args.toolchain)
+    let (toolchain_name, toolchain) = config.toolchain(build_args.subcommand)
         .context("Failed to find toolchain in build.yaml file")?;
 
     /* Path definition */

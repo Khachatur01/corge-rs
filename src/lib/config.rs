@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Subcommand;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use crate::cli::BuildToolchain;
 
 #[derive(Serialize, Deserialize, Subcommand, Debug, Default, Clone)]
 pub enum LinkStrategy {
@@ -120,19 +121,32 @@ pub struct Config {
 
 impl Config {
     /** Returns the toolchain name on an error case */
-    pub fn toolchain(&self, toolchain_name: Option<String>) -> Result<(String, Toolchain)> {
-        match toolchain_name {
-            None => {
+    pub fn toolchain(&self, toolchain: Option<BuildToolchain>) -> Result<(String, Toolchain)> {
+        // let toolchain = toolchain.map(|toolchain| toolchain.0);
+
+        match toolchain {
+            None | Some(BuildToolchain::Default) => {
                 let name = "default".to_string();
                 let toolchain = Toolchain::default();
 
                 Ok((name, toolchain))
-            },
-            Some(name) => {
+            }
+            Some(BuildToolchain::Named { name }) => {
                 let toolchain = self.toolchains
                     .get(&name)
                     .cloned()
                     .ok_or_else(|| anyhow::anyhow!("Toolchain '{}' not found", name))?;
+
+                Ok((name, toolchain))
+            }
+            Some(BuildToolchain::Custom { compiler, archiver, compiler_flags, linker_flags }) => {
+                let name = "custom".to_string();
+                let toolchain = Toolchain {
+                    compiler,
+                    archiver,
+                    compiler_flags,
+                    linker_flags,
+                };
 
                 Ok((name, toolchain))
             }

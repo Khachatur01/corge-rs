@@ -92,14 +92,35 @@ pub struct CompilationDatabaseArgs {
     pub path: PathBuf,
 }
 
+#[derive(Subcommand, Debug)]
+pub enum BuildToolchain {
+    /// Selects the default toolchain.
+    Default,
+    /// Selects toolchain by name from the build.yaml file
+    Named {
+        #[arg(value_name = "NAME")]
+        name: String,
+    },
+    /// Selects a custom toolchain.
+    Custom {
+        #[arg(long, default_value = "./", default_value = "gcc", value_name = "COMPILER")]
+        compiler: String,
+        #[arg(long, default_value = "./", default_value = "ar", value_name = "ARCHIVER")]
+        archiver: String,
+        #[clap(short, long, value_parser, num_args = 0.., value_delimiter = ' ')]
+        compiler_flags: Vec<String>,
+        #[clap(short, long, value_parser, num_args = 0.., value_delimiter = ' ')]
+        linker_flags: Vec<String>,
+    }
+}
+
 #[derive(Parser, Debug)]
 pub struct BuildArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
 
-    /// Selects the toolchain to use from the build.yaml file.
-    #[arg(long, value_name = "TOOLCHAIN")]
-    pub toolchain: Option<String>,
+    #[command(subcommand)]
+    pub subcommand: Option<BuildToolchain>,
 
     /// Builds the project in release mode (optimized).
     #[arg(long, group = "build_mode")]
