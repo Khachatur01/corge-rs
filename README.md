@@ -21,6 +21,7 @@ Note: The CLI subcommand `run` is not implemented yet.
 - Dependency management via registries (git and filesystem)
 - Customizable toolchains (compiler, archiver, flags)
 - Cross-platform output file naming via target-lexicon
+- Compilation database generator (compile_commands.json) with dependency/include on the include path
 - Planned: C++ support and `run` command
 
 ## Requirements
@@ -71,6 +72,8 @@ Subcommands and key options:
   - Removes target/ (and dependency/ if --deps-too)
 - run [PATH]
   - TODO: Not implemented yet
+- compdb [PATH]
+  - Generates a compilation database at compilation_database/compile_commands.json for C sources under src/ with `gcc -c <file> -I <project>/dependency/include`
 
 ## Configuration (build.yaml)
 Top-level structure (see projects/example_app/build.yaml for a full example):
@@ -134,6 +137,24 @@ When building, the following directories are created under your project:
 Note on IDE/include paths
 - If you use an IDE (e.g., CLion, VS Code, etc.), add the dependency/include directory of your project as an "Include Directory" so headers from dependencies are discovered by code completion and standalone compilation.
 - Alternatively, ensure your compiler flags include -I dependency/include (or the absolute path to that folder) when building outside of corge-rs.
+
+## Compilation database (compile_commands.json)
+The compdb subcommand generates a JSON compilation database suitable for clangd/clang-tidy and many IDEs.
+
+- Usage (run inside your project directory):
+  - corge-rs compdb .
+- Output location:
+  - ./compilation_database/compile_commands.json
+- Contents:
+  - One command per C source in src/, using gcc in the form: gcc -c <file> -I <project>/dependency/include
+  - The dependency/include directory is always on the include path so headers from dependencies are resolved by language tools.
+- IDE integration:
+  - clangd: point clangd to the generated file or symlink it to ./compile_commands.json in the project root.
+  - VS Code (C/C++ extension): set C_Cpp.default.compileCommands to the path of the generated file.
+  - CLion: supports compilation databases; open the project and configure the path if not auto-detected.
+- Notes:
+  - The compilation_database directory is git-ignored by default.
+  - Re-run corge-rs compdb . after adding/removing sources or dependencies to refresh the database.
 
 ## Environment variables
 - Logging is provided by simple_logger and can be configured via environment variables.

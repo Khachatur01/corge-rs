@@ -35,18 +35,18 @@ impl DependencySourceFetcher {
 
         for dependency in &self.dependencies {
             let artifact_path = sources_dir.join(&dependency.name);
+
+            let registry = self.registries.get(&dependency.registry_name)
+                .ok_or_else(|| anyhow::anyhow!("Registry '{}' not found", &dependency.registry_name))?;
+
             let dependency_fetched = fs::exists(&artifact_path)
                 .with_context(|| format!("Failed to check if dependency '{}' is fetched", dependency.name))?;
 
             if dependency_fetched {
                 log::info!("Skipping already fetched dependency '{}'", dependency.name);
-                continue;
+            } else {
+                fetch_dependency(registry, dependency, &artifact_path)?;
             }
-
-            let registry = self.registries.get(&dependency.registry_name)
-                .ok_or_else(|| anyhow::anyhow!("Repository '{}' not found", &dependency.registry_name))?;
-
-            fetch_dependency(registry, dependency, &artifact_path)?;
 
             artifacts.push(
                 Artifact {

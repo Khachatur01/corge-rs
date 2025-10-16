@@ -18,5 +18,6 @@ fn main() {
         CommandCli::Clean(clean_args) => command::clean::clean(clean_args).unwrap(),
         CommandCli::Build(build_args) => command::build::build(build_args).unwrap(),
         CommandCli::Run(build_args) => command::run::run(build_args),
+        CommandCli::Compdb(build_args) => command::compilation_database::compilation_database(build_args).unwrap(),
     }
 }

@@ -59,6 +59,12 @@ pub struct CleanArgs {
 }
 
 #[derive(Parser, Debug)]
+pub struct CompilationDatabaseArgs {
+    #[arg(default_value = "./", value_name = "PATH")]
+    pub path: PathBuf,
+}
+
+#[derive(Parser, Debug)]
 pub struct BuildArgs {
     #[arg(default_value = "./", value_name = "PATH")]
     pub path: PathBuf,
@@ -96,6 +102,8 @@ pub enum CommandCli {
     Build(BuildArgs),
     /// Builds and runs the project.
     Run(BuildArgs),
+    /// Generates a compile_commands.json for the project.
+    Compdb(CompilationDatabaseArgs),
 }
 
 #[derive(Parser, Debug)]
