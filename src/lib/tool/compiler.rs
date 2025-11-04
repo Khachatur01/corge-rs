@@ -22,8 +22,8 @@ fn hash<P: AsRef<Path> + Hash + Debug>(path: P) -> Result<String> {
 
     hasher.update(file);
 
-    let hash: String = hasher
-        .finalize().0
+    let hash_bytes = hasher.finalize();
+    let hash: String = hash_bytes
         .iter()
         .map(|byte| format!("{:02x}", byte))
         .collect();

@@ -1,8 +1,7 @@
 pub mod compilation_database_path;
 
-use crate::cli::{BuildModeCli, CompilationDatabaseArgs};
+use crate::cli::{CompilationDatabaseArgs};
 use crate::command::build::dependency_path::DependencyPath;
-use crate::config::{Config, OptimizationLevel, Profile};
 use crate::tool::files_fetcher::fetch_files;
 use anyhow::{bail, Context, Result};
 use serde::Serialize;

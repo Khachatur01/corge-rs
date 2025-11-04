@@ -33,12 +33,14 @@ Note: The CLI subcommand `run` is not implemented yet.
 - Git (optional; required if you use a Git registry for dependencies)
 
 ## Installation
+- From crates.io (recommended):
+  - cargo install corge-rs
 - Local install from this repo:
   - cargo install --path .
 - Or run without installing:
   - cargo run -- <subcommand> [options]
 
-TODO: If this is published to crates.io, add the crate name and cargo install corge-rs instructions here.
+After publishing, the crate documentation will be available at: https://docs.rs/corge-rs
 
 ## Quick start
 Initialize a new C project in ./my_app as an executable (default):
@@ -80,9 +82,9 @@ Top-level structure (see projects/example_app/build.yaml for a full example):
 - project:
   - name: string
   - version: string
-  - link_strategy: one of !Executable | !StaticLibrary | !DynamicLibrary
 - profiles:
   - release.development: optimization_level: one of [None, O, O0, O1, O2, O3, Os, Og, Oz, Ofast]
+  - release.development: link_strategy: one of [!Executable, !StaticLibrary, !DynamicLibrary]
 - registries: map of <name> -> registry
   - !Git: { url: string, branch: string }
   - !FileSystem: string (path to a folder containing dependency projects)
@@ -94,13 +96,14 @@ Example:
 project:
   name: my-app
   version: 1.0.0
-  link_strategy: !Executable
 
 profiles:
   release:
     optimization_level: O
+    link_strategy: !Executable
   development:
     optimization_level: None
+    link_strategy: !Executable
 
 registries:
   filesystem: !FileSystem ../
