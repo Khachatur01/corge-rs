@@ -84,7 +84,6 @@ Top-level structure (see projects/example_app/build.yaml for a full example):
   - version: string
 - profiles:
   - release.development: optimization_level: one of [None, O, O0, O1, O2, O3, Os, Og, Oz, Ofast]
-  - release.development: link_strategy: one of [!Executable, !StaticLibrary, !DynamicLibrary]
 - registries: map of <name> -> registry
   - !Git: { url: string, branch: string }
   - !FileSystem: string (path to a folder containing dependency projects)
@@ -100,10 +99,8 @@ project:
 profiles:
   release:
     optimization_level: O
-    link_strategy: !Executable
   development:
     optimization_level: None
-    link_strategy: !Executable
 
 registries:
   filesystem: !FileSystem ../
