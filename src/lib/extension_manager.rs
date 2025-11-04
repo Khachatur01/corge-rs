@@ -1,7 +1,9 @@
 use std::process::Command;
 use std::str::FromStr;
 use target_lexicon::{OperatingSystem, Triple};
+use crate::std_command_ext::ExecuteCommand;
 
+#[derive(Debug)]
 pub enum Extension {
     Object,
     Executable,
@@ -51,10 +53,14 @@ impl Extension {
     }
 
     fn for_compiler(&self, compiler: &str) -> Option<String> {
-        let stdout = Command::new(compiler).arg("-dumpmachine").output().unwrap().stdout;
+        log::info!("{:?}. Getting extention for compiler: {}", &self, compiler);
+        let stdout = Command::new(compiler)
+            .arg("-dumpmachine")
+            .execute(true)
+            .expect(format!("Failed to execute: {} -dumpmachine", compiler).as_str());
 
         /* fixme */
-        let triple = String::from_utf8(stdout).unwrap().strip_suffix("\n").unwrap().to_string();
+        let triple = stdout.strip_suffix("\n").unwrap().to_string();
 
         self.for_triple(&triple)
     }
