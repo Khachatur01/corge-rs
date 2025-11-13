@@ -5,6 +5,10 @@ use crate::std_command_ext::ExecuteCommand;
 use crate::tool::dir_copier::deep_copy;
 
 fn clone_git(url: String, branch: String, destination: PathBuf) -> anyhow::Result<()> {
+    if destination.exists() {
+        std::fs::remove_dir_all(&destination)?;
+    }
+
     let mut command = Command::new("git");
     command.arg("clone");
     command.arg(url);
